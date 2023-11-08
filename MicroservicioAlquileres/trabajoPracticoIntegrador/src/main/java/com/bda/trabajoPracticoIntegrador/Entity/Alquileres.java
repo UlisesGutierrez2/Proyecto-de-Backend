@@ -3,6 +3,9 @@ package com.bda.trabajoPracticoIntegrador.Entity;
 import jakarta.persistence.*;
 import lombok.Data;
 
+import java.sql.Time;
+import java.sql.Timestamp;
+
 @Entity
 @Table(name = "ALQUILERES")
 @Data
@@ -28,13 +31,13 @@ public class Alquileres {
     private int estacionDevolucion;
 
     @Column(name = "FECHA_HORA_RETIRO")
-    private int fechaHoraRetiro;
+    private String fechaHoraRetiro;
 
     @Column(name = "FECHA_HORA_DEVOLUCION")
-    private int fechaHoraDevolucion;
+    private String fechaHoraDevolucion;
 
     @Column(name = "MONTO")
-    private int monto;
+    private double monto;
 
     @OneToOne
     @JoinColumn(name = "ID_TARIFA")

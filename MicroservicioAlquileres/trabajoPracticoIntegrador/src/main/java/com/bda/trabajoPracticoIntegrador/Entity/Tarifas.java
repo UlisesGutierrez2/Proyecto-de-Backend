@@ -1,10 +1,11 @@
 package com.bda.trabajoPracticoIntegrador.Entity;
 
 import jakarta.persistence.*;
+import jakarta.persistence.criteria.CriteriaBuilder;
 import lombok.Data;
 
 @Entity
-@Table(name = "ESTACIONES")
+@Table(name = "TARIFAS")
 @Data
 public class Tarifas {
     @Id
@@ -15,20 +16,20 @@ public class Tarifas {
     @Column(name = "TIPO_TARIFA")
     private int tipoTarifa;
 
-    @Column(name = "DEFINICIÓN")
-    private String definicion;
+    @Column(name = "DEFINICION")
+    private char definicion;
 
     @Column(name = "DIA_SEMANA")
-    private int diaSemana;
+    private Integer diaSemana;
 
     @Column(name = "DIA_MES")
-    private int diaMes;
+    private Integer diaMes;
 
     @Column(name = "MES")
-    private int mes;
+    private Integer mes;
 
     @Column(name = "ANIO")
-    private int anio;
+    private Integer anio;
 
     @Column(name = "MONTO_FIJO_ALQUILER")
     private int montoFijoAlquiler;
