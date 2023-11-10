@@ -1,5 +1,6 @@
 package com.bda.trabajoPractico.APIGateway.apiGWTPI.Config;
 
+import org.springframework.http.HttpMethod;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.route.RouteLocator;
 import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
@@ -31,24 +32,18 @@ public class GWConfig {
 
     @Bean
     public SecurityWebFilterChain filterChain(ServerHttpSecurity http) throws Exception {
-        http.authorizeExchange(exchanges -> exchanges
-
-                        // Esta ruta puede ser accedida por cualquiera, sin autorización
-                        .pathMatchers("/api/estaciones/**","/api/alquileres/**").permitAll()
+        http
+                .authorizeExchange(authorizeExchangeSpec -> authorizeExchangeSpec
+                        .pathMatchers("/api/estaciones/**", "/api/alquileres/**").permitAll()
+                        .pathMatchers("/api/entradas/**").hasAnyRole("ADMIN", "CLIENTE")
+                        .pathMatchers(HttpMethod.POST, "/api/estaciones/**").hasRole("ADMIN")
+                        .pathMatchers(HttpMethod.GET, "/api/alquileres/**").hasRole("ADMIN")
+                        .pathMatchers("/api/**").hasRole("CLIENTE")
                         .anyExchange().authenticated()
-                        /*
-                        .pathMatchers("/api/entradas/**")
-                        .hasRole("KEMPES_ORGANIZADOR")
-
-
-                         */
-                        // Cualquier otra petición...
-                         //.anyExchange()
-                        //.authenticated()
-
-
-                ).oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()))
+                )
+                .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()))
                 .csrf(csrf -> csrf.disable());
+
         return http.build();
     }
 

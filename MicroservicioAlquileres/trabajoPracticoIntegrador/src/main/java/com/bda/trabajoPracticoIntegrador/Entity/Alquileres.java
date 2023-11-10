@@ -3,9 +3,6 @@ package com.bda.trabajoPracticoIntegrador.Entity;
 import jakarta.persistence.*;
 import lombok.Data;
 
-import java.sql.Time;
-import java.sql.Timestamp;
-
 @Entity
 @Table(name = "ALQUILERES")
 @Data
