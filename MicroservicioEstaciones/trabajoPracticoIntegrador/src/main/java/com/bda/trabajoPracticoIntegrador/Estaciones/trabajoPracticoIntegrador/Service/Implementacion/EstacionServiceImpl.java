@@ -51,4 +51,37 @@ public class EstacionServiceImpl implements EstacionService {
     public List<Estacion> getAll() {
         return repository.findAll();
     }
+
+    public Estacion getByUbicacion(double latitud, double longitud) {
+        List<Estacion> estacionList = repository.findAll();
+
+        Estacion estacion = null;
+        double minDis = Double.MAX_VALUE;
+
+        for (Estacion e : estacionList) {
+            double distancia = calcularDistancia(latitud, longitud, e.getLatitud(), e.getLongitud());
+            if (distancia < minDis) {
+                minDis = distancia;
+                estacion = e;
+            }
+        }
+
+        return estacion;
+    }
+
+    public static double calcularDistancia(double latitud, double longitud, double latitud2, double longitud2) {
+
+        final double radioTierra = 6371;
+        double distLatitud = Math.toRadians(latitud2 - latitud);
+        double distLongitud = Math.toRadians(longitud2 - longitud);
+        double latRad = Math.toRadians(latitud);
+        double lat2Rad = Math.toRadians(latitud2);
+
+        double calc1 = Math.sin(distLatitud / 2) * Math.sin(distLatitud / 2) +
+                Math.cos(latRad) * Math.cos(lat2Rad) * Math.sin(distLongitud / 2) * Math.sin(distLongitud / 2);
+        double calcFinal = 2 * Math.atan2(Math.sqrt(calc1), Math.sqrt(1 - calc1));
+        double distancia = radioTierra * calcFinal;
+
+        return distancia;
+    }
 }

@@ -14,4 +14,6 @@ public interface EstacionService {
     Estacion getById(int id);
 
     List<Estacion> getAll();
+
+    Estacion getByUbicacion(double latitud, double longitud);
 }

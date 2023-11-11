@@ -49,4 +49,10 @@ public class EstacionController {
         return ResponseEntity.ok(estacionActualizada);
     }
 
+    @GetMapping("/ubicacion")
+    public ResponseEntity<Estacion> getByUbicacion(@RequestParam(value = "latitud") double latitud,
+                                                   @RequestParam(value = "longitud") double longitud) {
+        Estacion estacion = service.getByUbicacion(latitud, longitud);
+        return ResponseEntity.ok(estacion);
+    }
 }
