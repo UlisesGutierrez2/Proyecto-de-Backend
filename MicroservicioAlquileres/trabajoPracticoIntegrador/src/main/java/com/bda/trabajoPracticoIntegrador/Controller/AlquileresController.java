@@ -44,7 +44,7 @@ public class AlquileresController {
     @GetMapping("/{id}")
     public ResponseEntity<AlquilerDto> getById(@PathVariable int id) {
         Alquileres alquileres = service.getById(id);
-        if(alquileres != null) {
+        if (alquileres != null) {
             int estacionRetiroId = alquileres.getEstacionRetiro();
             int estacionDevolucionId = alquileres.getEstacionDevolucion();
 
@@ -72,7 +72,7 @@ public class AlquileresController {
         String url = "http://localhost:8082/api/estaciones/" + estacionId;
         return restTemplate.getForObject(url, EstacionDto.class);
     }
-
+/*
     // Método para convertir un String de fecha a Timestamp
     private LocalDateTime parseFecha(String fecha) {
         // Intentar varios patrones de formato
@@ -94,8 +94,10 @@ public class AlquileresController {
     }
 
 
+ */
 
 
+/*
 
     @PostMapping
     public ResponseEntity<Alquileres> addAlquiler(@RequestBody AlquilerDto alquiler) {
@@ -131,6 +133,20 @@ public class AlquileresController {
         return ResponseEntity.ok(resultado);
     }
 
+ */
+
+    @PostMapping("/iniciar")
+    public ResponseEntity<Alquileres> iniciarAlquiler(@RequestParam String idCliente, @RequestParam int estacionRetiroId) {
+        Alquileres alquiler = service.iniciarAlquiler(idCliente, estacionRetiroId);
+
+        if (alquiler != null) {
+            return ResponseEntity.ok(alquiler);
+        } else {
+
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        }
+    }
+
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable int id) {
@@ -148,4 +164,13 @@ public class AlquileresController {
             return ResponseEntity.notFound().build();
         }
     }
+
+/*
+    @PutMapping("/finalizar")
+    public ResponseEntity<Alquileres> finalizarAlquiler() {
+
+        return ResponseEntity.ok().build();
+    }
+ */
+
 }
