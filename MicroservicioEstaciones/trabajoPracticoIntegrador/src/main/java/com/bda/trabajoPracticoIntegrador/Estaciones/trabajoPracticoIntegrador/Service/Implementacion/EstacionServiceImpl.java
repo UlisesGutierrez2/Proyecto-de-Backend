@@ -52,21 +52,21 @@ public class EstacionServiceImpl implements EstacionService {
         return repository.findAll();
     }
 
-    public Estacion getByUbicacion(double latitud, double longitud) {
+    public Estacion getEstacionMasCercana(double latitud, double longitud) {
         List<Estacion> estacionList = repository.findAll();
 
-        Estacion estacion = null;
-        double minDis = Double.MAX_VALUE;
+        Estacion estacionMasCercana = estacionList.get(0);
+        double minimaDistancia = calcularDistancia(latitud, longitud, estacionMasCercana.getLatitud(), estacionMasCercana.getLongitud());
 
         for (Estacion e : estacionList) {
             double distancia = calcularDistancia(latitud, longitud, e.getLatitud(), e.getLongitud());
-            if (distancia < minDis) {
-                minDis = distancia;
-                estacion = e;
+            if (distancia < minimaDistancia) {
+                minimaDistancia = distancia;
+                estacionMasCercana = e;
             }
         }
 
-        return estacion;
+        return estacionMasCercana;
     }
 
     public static double calcularDistancia(double latitud, double longitud, double latitud2, double longitud2) {

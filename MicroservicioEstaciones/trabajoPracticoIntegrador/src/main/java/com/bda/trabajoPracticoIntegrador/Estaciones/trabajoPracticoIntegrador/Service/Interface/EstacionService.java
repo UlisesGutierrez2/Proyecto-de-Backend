@@ -15,5 +15,5 @@ public interface EstacionService {
 
     List<Estacion> getAll();
 
-    Estacion getByUbicacion(double latitud, double longitud);
+    Estacion getEstacionMasCercana(double latitud, double longitud);
 }

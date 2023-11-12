@@ -3,6 +3,9 @@ package com.bda.trabajoPracticoIntegrador.Entity;
 import jakarta.persistence.*;
 import lombok.Data;
 
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "ALQUILERES")
 @Data
@@ -28,10 +31,10 @@ public class Alquileres {
     private int estacionDevolucion;
 
     @Column(name = "FECHA_HORA_RETIRO")
-    private String fechaHoraRetiro;
+    private LocalDateTime fechaHoraRetiro;
 
     @Column(name = "FECHA_HORA_DEVOLUCION")
-    private String fechaHoraDevolucion;
+    private LocalDateTime fechaHoraDevolucion;
 
     @Column(name = "MONTO")
     private double monto;

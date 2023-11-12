@@ -34,11 +34,14 @@ public class GWConfig {
     public SecurityWebFilterChain filterChain(ServerHttpSecurity http) throws Exception {
         http
                 .authorizeExchange(authorizeExchangeSpec -> authorizeExchangeSpec
-                        .pathMatchers("/api/estaciones/**", "/api/alquileres/**").permitAll()
+                        /*.pathMatchers("/api/estaciones/**", "/api/alquileres/**").permitAll()
                         .pathMatchers("/api/entradas/**").hasAnyRole("ADMIN", "CLIENTE")
+
+                         */
                         .pathMatchers(HttpMethod.POST, "/api/estaciones/**").hasRole("ADMIN")
                         .pathMatchers(HttpMethod.GET, "/api/alquileres/**").hasRole("ADMIN")
                         .pathMatchers("/api/**").hasRole("CLIENTE")
+                        .pathMatchers(HttpMethod.GET,"/api/estaciones/**").hasRole("CLIENTE")
                         .anyExchange().authenticated()
                 )
                 .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()))

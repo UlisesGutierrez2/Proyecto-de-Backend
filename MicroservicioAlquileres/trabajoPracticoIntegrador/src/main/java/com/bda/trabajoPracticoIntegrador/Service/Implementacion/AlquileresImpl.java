@@ -1,5 +1,6 @@
 package com.bda.trabajoPracticoIntegrador.Service.Implementacion;
 
+import com.bda.trabajoPracticoIntegrador.Dtos.EstacionDto;
 import com.bda.trabajoPracticoIntegrador.Entity.Alquileres;
 import com.bda.trabajoPracticoIntegrador.Repository.AlquileresRepository;
 import com.bda.trabajoPracticoIntegrador.Service.Interface.AlquileresService;
@@ -50,6 +51,20 @@ public class AlquileresImpl implements AlquileresService {
         Optional<Alquileres> optionalAlquileres = repository.findById(id);
         return optionalAlquileres.orElse(null);
     }
+
+    /*
+    public EstacionDto getByIdEstacionDto(int id) {
+        Optional<EstacionDto> optionalEstacionDto = repository.findById(id);
+
+        if (optionalEstacionDto.isPresent()) {
+            return optionalEstacionDto.get();
+        } else {
+            throw new NoSuchElementException("Estación con ID " + id + " no encontrada");
+        }
+    }
+
+
+     */
 
     @Override
     public List<Alquileres> getAll() {

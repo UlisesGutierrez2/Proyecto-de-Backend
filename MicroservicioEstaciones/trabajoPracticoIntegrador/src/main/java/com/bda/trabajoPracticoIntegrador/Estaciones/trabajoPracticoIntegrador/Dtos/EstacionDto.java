@@ -1,4 +1,4 @@
-package com.bda.trabajoPracticoIntegrador.Dtos;
+package com.bda.trabajoPracticoIntegrador.Estaciones.trabajoPracticoIntegrador.Dtos;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
@@ -7,11 +7,13 @@ import lombok.Data;
 public class EstacionDto {
 
     private int id;
+
     @JsonIgnore
     private String nombre;
+
     @JsonIgnore
     private double latitud;
+
     @JsonIgnore
     private double longitud;
-
 }

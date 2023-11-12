@@ -50,9 +50,17 @@ public class EstacionController {
     }
 
     @GetMapping("/ubicacion")
-    public ResponseEntity<Estacion> getByUbicacion(@RequestParam(value = "latitud") double latitud,
-                                                   @RequestParam(value = "longitud") double longitud) {
-        Estacion estacion = service.getByUbicacion(latitud, longitud);
+    public ResponseEntity<?> getByUbicacion(@RequestParam(value = "latitud") Double latitud,
+                                            @RequestParam(value = "longitud") Double longitud) {
+        if (latitud == null || longitud == null) {
+            return ResponseEntity.badRequest().body("Las coordenadas son inválidas.");
+        }
+
+        Estacion estacion = service.getEstacionMasCercana(latitud, longitud);
+        if (estacion == null) {
+            return ResponseEntity.notFound().build();
+        }
+
         return ResponseEntity.ok(estacion);
     }
 }
