@@ -5,10 +5,7 @@ import com.bda.trabajoPracticoIntegrador.Entity.Alquileres;
 import com.bda.trabajoPracticoIntegrador.Service.Interface.AlquileresService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
@@ -165,12 +162,56 @@ public class AlquileresController {
         }
     }
 
-/*
-    @PutMapping("/finalizar")
-    public ResponseEntity<Alquileres> finalizarAlquiler() {
+    @PutMapping("/api/alquileres/finalizar")
+    public ResponseEntity<Alquileres> finalizarAlquiler(@RequestParam int id) {
+        // Obtener la información del alquiler
+        Alquileres alquiler = service.getById(id);
 
-        return ResponseEntity.ok().build();
+        if (alquiler != null) {
+            // Llamada al microservicio externo de cotizaciones
+            String cotizacionApiUrl = "http://34.82.105.125:8080/convertir";
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+
+            // Armo Solicitud
+            String requestBody = "{\"moneda_destino\":\"USD\",\"importe\":1000}";
+
+            // Configurar la solicitud HTTP
+            HttpEntity<String> entity = new HttpEntity<>(requestBody, headers);
+
+            // Realizar la solicitud POST
+            ResponseEntity<String> response = restTemplate.exchange(cotizacionApiUrl, HttpMethod.POST, entity, String.class);
+
+            // Manejar la respuesta del microservicio de cotizaciones según sea necesario
+            if (response.getStatusCode().is2xxSuccessful()) {
+                // Extraer y manejar la respuesta del microservicio
+                String cotizacionResponse = response.getBody();
+
+                // Parsear la respuesta del microservicio para obtener el monto
+                // Falta tratar la conversión
+                double montoConvertido = parsearRespuestaDelMicroservicio(cotizacionResponse);
+
+                // Actualizar el monto en el objeto de alquiler
+                alquiler.setMonto(montoConvertido);
+
+                // Lo que falta para finalizar el alquiler
+
+                // Guardar la instancia actualizada en la base de datos
+                service.update(alquiler.getId(), alquiler);
+
+                return ResponseEntity.ok(alquiler);
+            } else {
+                // Manejar el caso en el que la solicitud al microservicio de cotizaciones falla
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            }
+        } else {
+            return ResponseEntity.notFound().build();
+        }
     }
- */
+
+    private double parsearRespuestaDelMicroservicio(String cotizacionResponse) {
+        // Aca falta la lógica de conversión
+        return 1.5;
+    }
 
 }
