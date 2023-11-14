@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import lombok.Data;
+import lombok.Getter;
 
 @Entity
 @Table(name = "TARIFAS")
@@ -44,7 +45,7 @@ public class Tarifas {
 
     @JsonIgnore
     @Column(name = "MONTO_MINUTO_FRACCION")
-    private int montoMinutoAlquiler;
+    private int montoMinutoFraccion;
 
     @JsonIgnore
     @Column(name = "MONTO_KM")

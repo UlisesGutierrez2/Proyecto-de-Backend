@@ -1,5 +1,6 @@
 package com.bda.trabajoPracticoIntegrador.Entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -16,16 +17,15 @@ public class Alquileres {
     @Column(name = "ID")
     private int id;
 
+
     @Column(name = "ID_CLIENTE")
     private String idCliente;
 
     @Column(name = "ESTADO")
     private int estado;
 
-
     @Column(name = "ESTACION_RETIRO", nullable = false)
     private int estacionRetiro;
-
 
     @Column(name = "ESTACION_DEVOLUCION", nullable = false)
     private int estacionDevolucion;
@@ -39,6 +39,7 @@ public class Alquileres {
     @Column(name = "MONTO")
     private double monto;
 
+    @JsonIgnore
     @OneToOne
     @JoinColumn(name = "ID_TARIFA")
     private Tarifas idTarifa;

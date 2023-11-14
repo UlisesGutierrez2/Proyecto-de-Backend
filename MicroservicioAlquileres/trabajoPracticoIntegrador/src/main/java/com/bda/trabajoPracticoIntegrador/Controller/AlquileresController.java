@@ -17,6 +17,8 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.List;
+import java.util.Map;
+import java.util.NoSuchElementException;
 
 @RestController
 @RequestMapping("/api/alquileres")
@@ -133,8 +135,8 @@ public class AlquileresController {
  */
 
     @PostMapping("/iniciar")
-    public ResponseEntity<Alquileres> iniciarAlquiler(@RequestParam String idCliente, @RequestParam int estacionRetiroId) {
-        Alquileres alquiler = service.iniciarAlquiler(idCliente, estacionRetiroId);
+    public ResponseEntity<Alquileres> iniciarAlquiler(@RequestParam String idCliente, @RequestParam int estacionRetiroId, @RequestParam int estacionDevolucionId) {
+        Alquileres alquiler = service.iniciarAlquiler(idCliente, estacionRetiroId, estacionDevolucionId);
 
         if (alquiler != null) {
             return ResponseEntity.ok(alquiler);
@@ -162,6 +164,7 @@ public class AlquileresController {
         }
     }
 
+    /*
     @PutMapping("/api/alquileres/finalizar")
     public ResponseEntity<Alquileres> finalizarAlquiler(@RequestParam int id) {
         // Obtener la información del alquiler
@@ -208,10 +211,116 @@ public class AlquileresController {
             return ResponseEntity.notFound().build();
         }
     }
-
+     */
     private double parsearRespuestaDelMicroservicio(String cotizacionResponse) {
         // Aca falta la lógica de conversión
         return 1.5;
     }
 
+
+    /*
+
+        @PutMapping("/api/alquileres/finalizar")
+        public ResponseEntity<Alquileres> finalizarAlquiler(
+                @RequestParam int id,
+                @RequestParam(required = false, defaultValue = "ARS") String moneda) {
+
+            // Obtener la información del alquiler
+            Alquileres alquiler = service.getById(id);
+
+            if (alquiler != null) {
+                // Lógica para calcular el costo del alquiler basado en las restricciones
+                // ...
+
+                // Obtener la distancia entre estación de retiro y estación de devolución
+                double distanciaEnKm = calcularDistancia(alquiler.getEstacionRetiro(), alquiler.getEstacionDevolucion());
+
+                // Calcular el costo total del alquiler
+                double costoTotal = calcularCostoTotal(alquiler, distanciaEnKm);
+
+                // Aplicar descuento si el día de retiro es un día promocional
+                if (esDiaPromocional(alquiler.getFechaRetiro())) {
+                    double porcentajeDescuento = obtenerPorcentajeDescuento(alquiler.getFechaRetiro());
+                    costoTotal *= (1 - porcentajeDescuento);
+                }
+
+                // Llamada al microservicio externo de cotizaciones
+                String cotizacionApiUrl = "http://34.82.105.125:8080/convertir";
+                HttpHeaders headers = new HttpHeaders();
+                headers.setContentType(MediaType.APPLICATION_JSON);
+
+                // Armo Solicitud
+                String requestBody = "{\"moneda_destino\":\"" + moneda + "\",\"importe\":" + costoTotal + "}";
+
+                // Configurar la solicitud HTTP
+                HttpEntity<String> entity = new HttpEntity<>(requestBody, headers);
+
+                // Realizar la solicitud POST
+                ResponseEntity<String> response = restTemplate.exchange(cotizacionApiUrl, HttpMethod.POST, entity, String.class);
+
+                // Manejar la respuesta del microservicio de cotizaciones según sea necesario
+                if (response.getStatusCode().is2xxSuccessful()) {
+                    // Extraer y manejar la respuesta del microservicio
+                    String cotizacionResponse = response.getBody();
+
+                    // Parsear la respuesta del microservicio para obtener el monto convertido
+                    double montoConvertido = parsearRespuestaDelMicroservicio(cotizacionResponse);
+
+                    // Actualizar el monto en el objeto de alquiler
+                    alquiler.setMonto(montoConvertido);
+
+                    // Lo que falta para finalizar el alquiler
+
+                    // Guardar la instancia actualizada en la base de datos
+                    service.update(alquiler.getId(), alquiler);
+
+                    return ResponseEntity.ok(alquiler);
+                } else {
+                    // Manejar el caso en el que la solicitud al microservicio de cotizaciones falla
+                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+                }
+            } else {
+                return ResponseEntity.notFound().build();
+            }
+        }
+
+    // Métodos de ayuda para calcular el costo total, verificar si es un día promocional, etc.
+    // ...
+
+
+     */
+    @PutMapping("/finalizar/{id}")
+    public ResponseEntity<Alquileres> finalizarAlquiler(
+            @PathVariable int id,
+            @RequestParam(required = false, defaultValue = "ARS") String moneda,
+            @RequestBody AlquilerDto alquilerDto) {
+        try {
+            // Verificar que el ID en la URL coincida con el ID en el cuerpo del AlquilerDto
+            if (id != alquilerDto.getId()) {
+                log.error("El ID en la URL no coincide con el ID en el cuerpo del AlquilerDto.");
+                return ResponseEntity.badRequest().build();
+            }
+
+            // Verificar que el alquiler con el ID proporcionado existe
+            Alquileres alquiler = service.getById(id);
+            if (alquiler != null) {
+                Alquileres alquilerFinalizado = service.finalizarAlquiler(alquilerDto, moneda);
+                log.info("Alquiler finalizado con éxito.");
+                return ResponseEntity.ok(alquilerFinalizado);
+            } else {
+                log.error("No se encontró el alquiler con el ID proporcionado.");
+                return ResponseEntity.notFound().build();
+            }
+        } catch (HttpClientErrorException e) {
+            log.error("Error al llamar al servicio externo.", e);
+            return ResponseEntity.status(e.getStatusCode()).build();
+        } catch (NumberFormatException e) {
+            log.error("Error al convertir el ID a entero o al validar el ID en el cuerpo del AlquilerDto.", e);
+            return ResponseEntity.badRequest().build();
+        } catch (Exception e) {
+            log.error("Error inesperado.", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
 }
+
