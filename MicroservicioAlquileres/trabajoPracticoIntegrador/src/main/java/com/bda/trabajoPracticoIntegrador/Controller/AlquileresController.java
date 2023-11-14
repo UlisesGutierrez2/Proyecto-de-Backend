@@ -68,7 +68,7 @@ public class AlquileresController {
     }
 
     private EstacionDto getEstacionFromOtherService(int estacionId) {
-        String url = "http://localhost:8082/api/estaciones/" + estacionId;
+        String url = "http://localhost:8084/api/estaciones/" + estacionId;
         return restTemplate.getForObject(url, EstacionDto.class);
     }
 /*
