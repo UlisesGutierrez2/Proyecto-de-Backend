@@ -16,4 +16,6 @@ public interface EstacionService {
     List<Estacion> getAll();
 
     Estacion getEstacionMasCercana(double latitud, double longitud);
+
+    double calcularDistancia(double latitud, double longitud, double latitud2, double longitud2);
 }

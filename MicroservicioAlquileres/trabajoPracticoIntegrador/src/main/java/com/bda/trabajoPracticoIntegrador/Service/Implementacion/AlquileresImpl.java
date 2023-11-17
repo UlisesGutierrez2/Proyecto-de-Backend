@@ -93,11 +93,11 @@ public class AlquileresImpl implements AlquileresService {
     public double calcularMontoTotal(Alquileres alquiler, double distanciaEnKm) {
         List<Tarifas> tarifasList = obtenerTarifas();
 
-// Obtener el día de la semana de la fecha de retiro
+    // Obtener el día de la semana de la fecha de retiro
         int diaSemana = alquiler.getFechaHoraRetiro().getDayOfWeek().getValue();
         DayOfWeek dayOfWeek = DayOfWeek.of(diaSemana);
 
-// Encontrar la tarifa correspondiente al día de la semana
+    // Encontrar la tarifa correspondiente al día de la semana
         Optional<Tarifas> tarifaOpt = tarifasList.stream()
                 .filter(tarifa -> tarifa.getDiaSemana() == diaSemana)
                 .findFirst();
@@ -146,100 +146,99 @@ public class AlquileresImpl implements AlquileresService {
         return duration.toMinutes();
     }
 
-        public Alquileres finalizarAlquiler(AlquilerDto alquilerDto, String moneda) {
-            log.info("Iniciando finalizarAlquiler para el alquiler con ID() ", alquilerDto.getId());
-            // Obtener la información del alquiler
-            Alquileres alquiler = getById(alquilerDto.getId());
-            log.info("Alquiler: {}", alquiler);
-            if (alquiler != null && alquiler.getFechaHoraDevolucion() == null) {
-                // Obtener EstacionDto para estacion de retiro
-                EstacionDto estacionRetiroDto = alquilerDto.getEstacionRetiro();
-                log.info("Estacion Retiro: {}", estacionRetiroDto);
-                // Obtener EstacionDto para estacion de devolución
-                EstacionDto estacionDevolucionDto = alquilerDto.getEstacionDevolucion();
-                log.info("Estacion Devolución: {}", estacionDevolucionDto);
+    public Alquileres finalizarAlquiler(AlquilerDto alquilerDto, String moneda) {
+        log.info("Iniciando finalizarAlquiler para el alquiler con ID() ", alquilerDto.getId());
+        // Obtener la información del alquiler
+        Alquileres alquiler = getById(alquilerDto.getId());
+        log.info("Alquiler: {}", alquiler);
+        if (alquiler != null && alquiler.getFechaHoraDevolucion() == null) {
+            // Obtener EstacionDto para estacion de retiro
+            EstacionDto estacionRetiroDto = alquilerDto.getEstacionRetiro();
+            log.info("Estacion Retiro: {}", estacionRetiroDto);
+            // Obtener EstacionDto para estacion de devolución
+            EstacionDto estacionDevolucionDto = alquilerDto.getEstacionDevolucion();
+            log.info("Estacion Devolución: {}", estacionDevolucionDto);
 
-                // Establecer la fecha y hora de devolución
-                alquiler.setFechaHoraDevolucion(LocalDateTime.now());
+            // Establecer la fecha y hora de devolución
+            alquiler.setFechaHoraDevolucion(LocalDateTime.now());
 
-                // Calcular la distancia en kilómetros entre las estaciones de retiro y devolución
-                double distanciaEnKm = calcularDistancia(estacionRetiroDto, estacionDevolucionDto);
-                log.info("Distancia entre las estaciones: {} km", distanciaEnKm);
+            // Calcular la distancia en kilómetros entre las estaciones de retiro y devolución
+            double distanciaEnKm = calcularDistancia(estacionRetiroDto, estacionDevolucionDto);
+            log.info("Distancia entre las estaciones: {} km", distanciaEnKm);
 
 
+            // Calcular el monto total del alquiler
+            double montoTotal = calcularMontoTotal(alquiler, distanciaEnKm);
+            log.info("Monto total del alquiler: {}", montoTotal);
 
-                // Calcular el monto total del alquiler
-                double montoTotal = calcularMontoTotal(alquiler, distanciaEnKm);
-                log.info("Monto total del alquiler: {}", montoTotal);
-
-                // Aplicar descuento si es un día promocional
-                if (esDiaPromocional()) {
-                    double porcentajeDescuento = obtenerDescuentoPorDiaPromocional(alquiler.getFechaHoraRetiro());
-                    montoTotal *= (1 - porcentajeDescuento);
-                    log.info("Descuento aplicado: {}%", porcentajeDescuento * 100);
-                }
-
-                // Llamada al microservicio externo de cotizaciones
-                String cotizacionApiUrl = "http://34.82.105.125:8080/convertir";
-                HttpHeaders headers = new HttpHeaders();
-                headers.setContentType(MediaType.APPLICATION_JSON);
-
-                // Armar la solicitud
-                String requestBody = "{\"moneda_destino\":\"" + moneda + "\",\"importe\":" + montoTotal + "}";
-
-                // Configurar la solicitud HTTP
-                HttpEntity<String> entity = new HttpEntity<>(requestBody, headers);
-
-                try {
-                    // Log para registrar la solicitud al microservicio de cotizaciones
-                    log.info("Realizando solicitud al microservicio de cotizaciones. URL: {}", cotizacionApiUrl);
-
-                    // Realizar la solicitud POST
-                    ResponseEntity<String> response = restTemplate.exchange(cotizacionApiUrl, HttpMethod.POST, entity, String.class);
-
-                    // Log para registrar la respuesta del microservicio
-                    log.info("Respuesta del microservicio: {}", response);
-
-                    // Manejar la respuesta del microservicio de cotizaciones según sea necesario
-                    if (response.getStatusCode().is2xxSuccessful()) {
-                        // Extraer y manejar la respuesta del microservicio
-                        String cotizacionResponse = response.getBody();
-
-                        // Log para registrar la respuesta detallada del microservicio
-                        log.debug("Respuesta detallada del microservicio: {}", cotizacionResponse);
-
-                        // Parsear la respuesta del microservicio para obtener el monto convertido
-                        double montoConvertido = parsearRespuestaDelMicroservicio(cotizacionResponse, moneda);
-
-                        double montoFinal = montoConvertido * montoTotal;
-
-                        // Actualizar el monto en el objeto de alquiler
-                        alquiler.setMonto(montoFinal);
-
-                        // Establecer la fecha y hora de devolución
-                        alquiler.setFechaHoraDevolucion(LocalDateTime.now());
-
-                        // Guardar la instancia actualizada en la base de datos
-                        return update(alquiler.getId(), alquiler);
-                    } else {
-                        // Log para registrar el fallo de la solicitud al microservicio de cotizaciones
-                        log.error("La solicitud al microservicio de cotizaciones falló. Código de estado: {}", response.getStatusCode());
-
-                        // Manejar el caso en que la solicitud al microservicio de cotizaciones falla
-                        throw new HttpClientErrorException(response.getStatusCode());
-                    }
-                } catch (Exception e) {
-                    // Log para registrar cualquier excepción ocurrida durante la ejecución del bloque try
-                    log.error("Error al realizar la solicitud al microservicio de cotizaciones", e);
-
-                    // Puedes manejar la excepción según tus necesidades
-                    throw e;
-                }
-            } else {
-                log.error("Alquiler no encontrado o ya devuelto");
-                throw new NoSuchElementException("Alquiler no encontrado o ya devuelto");
+            // Aplicar descuento si es un día promocional
+            if (esDiaPromocional()) {
+                double porcentajeDescuento = obtenerDescuentoPorDiaPromocional(alquiler.getFechaHoraRetiro());
+                montoTotal *= (1 - porcentajeDescuento);
+                log.info("Descuento aplicado: {}%", porcentajeDescuento * 100);
             }
+
+            // Llamada al microservicio externo de cotizaciones
+            String cotizacionApiUrl = "http://34.82.105.125:8080/convertir";
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+
+            // Armar la solicitud
+            String requestBody = "{\"moneda_destino\":\"" + moneda + "\",\"importe\":" + montoTotal + "}";
+
+            // Configurar la solicitud HTTP
+            HttpEntity<String> entity = new HttpEntity<>(requestBody, headers);
+
+            try {
+                // Log para registrar la solicitud al microservicio de cotizaciones
+                log.info("Realizando solicitud al microservicio de cotizaciones. URL: {}", cotizacionApiUrl);
+
+                // Realizar la solicitud POST
+                ResponseEntity<String> response = restTemplate.exchange(cotizacionApiUrl, HttpMethod.POST, entity, String.class);
+
+                // Log para registrar la respuesta del microservicio
+                log.info("Respuesta del microservicio: {}", response);
+
+                // Manejar la respuesta del microservicio de cotizaciones según sea necesario
+                if (response.getStatusCode().is2xxSuccessful()) {
+                    // Extraer y manejar la respuesta del microservicio
+                    String cotizacionResponse = response.getBody();
+
+                    // Log para registrar la respuesta detallada del microservicio
+                    log.debug("Respuesta detallada del microservicio: {}", cotizacionResponse);
+
+                    // Parsear la respuesta del microservicio para obtener el monto convertido
+                    double montoConvertido = parsearRespuestaDelMicroservicio(cotizacionResponse, moneda);
+
+                    double montoFinal = montoConvertido * montoTotal;
+
+                    // Actualizar el monto en el objeto de alquiler
+                    alquiler.setMonto(montoFinal);
+
+                    // Establecer la fecha y hora de devolución
+                    alquiler.setFechaHoraDevolucion(LocalDateTime.now());
+
+                    // Guardar la instancia actualizada en la base de datos
+                    return update(alquiler.getId(), alquiler);
+                } else {
+                    // Log para registrar el fallo de la solicitud al microservicio de cotizaciones
+                    log.error("La solicitud al microservicio de cotizaciones falló. Código de estado: {}", response.getStatusCode());
+
+                    // Manejar el caso en que la solicitud al microservicio de cotizaciones falla
+                    throw new HttpClientErrorException(response.getStatusCode());
+                }
+            } catch (Exception e) {
+                // Log para registrar cualquier excepción ocurrida durante la ejecución del bloque try
+                log.error("Error al realizar la solicitud al microservicio de cotizaciones", e);
+
+                // Puedes manejar la excepción según tus necesidades
+                throw e;
+            }
+        } else {
+            log.error("Alquiler no encontrado o ya devuelto");
+            throw new NoSuchElementException("Alquiler no encontrado o ya devuelto");
         }
+    }
 
     public double calcularDistancia(EstacionDto estacion1, EstacionDto estacion2) {
 
