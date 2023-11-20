@@ -95,17 +95,25 @@ public class AlquilerServiceImpl implements AlquilerService {
 
         double costoMinutosFraccionados = 0;
 
+
+
     // Obtener el día de la semana de la fecha de retiro
         int diaSemana = alquiler.getFechaHoraRetiro().getDayOfWeek().getValue();
-        DayOfWeek dayOfWeek = DayOfWeek.of(diaSemana);
+        int diaMes = alquiler.getFechaHoraRetiro().getDayOfMonth();
+        int mes = alquiler.getFechaHoraRetiro().getMonth().getValue();
+        int anio = alquiler.getFechaHoraRetiro().getYear();
 
-    // Encontrar la tarifa correspondiente al día de la semana
-        Optional<Tarifa> tarifaOpt = tarifaList.stream()
-                .filter(tarifa -> tarifa.getDiaSemana() == diaSemana)
-                .findFirst();
+        Optional<Tarifa> tarifaOpt = tarifasRepository.findByParams(diaMes, mes, anio);
+
+        double montoFijoAlquiler;
+
+        // Otras operaciones con montoFijoAlquiler...
 
         if (tarifaOpt.isPresent()) {
+
             Tarifa tarifa = tarifaOpt.get();
+
+            montoFijoAlquiler = tarifa.getMontoFijoAlquiler();
 
             // Calcular la duración del alquiler en minutos
             long duracionEnMinutos = calcularDuracionEnMinutos(alquiler.getFechaHoraRetiro(), alquiler.getFechaHoraDevolucion());
@@ -126,28 +134,47 @@ public class AlquilerServiceImpl implements AlquilerService {
             double costoHorasCompletas = Math.ceil(cantHoras * tarifa.getMontoHora());
 
             // Calcular el costo total sumando todas las partes
-            double costoTotal = tarifa.getMontoFijoAlquiler() + costoMinutosFraccionados + costoHorasCompletas;
+            double costoTotal = montoFijoAlquiler + costoMinutosFraccionados + costoHorasCompletas;
 
-            // Aplicar descuento si es un día promocional
-            if (esDiaPromocional()) {
-                double porcentajeDescuento = obtenerDescuentoPorDiaPromocional(alquiler.getFechaHoraRetiro());
-                costoTotal *= (1 - porcentajeDescuento);
-            }
 
             return costoTotal;
+
         } else {
-            // Manejar el caso en el que no se encuentre la tarifa para el día de la semana
-            throw new NoSuchElementException("Tarifa no encontrada para el día de la semana: " + dayOfWeek);
+            // No hay tarifa específica para el día, mes y año
+            // Se puede aplicar la lógica basada en el día de la semana
+            Optional<Tarifa> tarifaDiaOpt = tarifasRepository.findByDay(diaSemana);
+
+            if (tarifaDiaOpt.isPresent()) {
+                // Existe una tarifa para el día de la semana
+                Tarifa tarifaDia = tarifaDiaOpt.get();
+                montoFijoAlquiler = tarifaDia.getMontoFijoAlquiler();
+
+                // Calcular la duración del alquiler en minutos
+                long duracionEnMinutos = calcularDuracionEnMinutos(alquiler.getFechaHoraRetiro(), alquiler.getFechaHoraDevolucion());
+
+                int cantHoras = (int) (duracionEnMinutos / 60);
+                int excedenteMinutos = (int) (duracionEnMinutos % 60);
+
+                if (excedenteMinutos <= 30) {
+                    costoMinutosFraccionados = Math.min(duracionEnMinutos, 30) * tarifaDia.getMontoMinutoFraccion();
+                } else {
+                    cantHoras += 1;
+                }
+
+                // Calcular el costo por hora completa a partir del minuto 31
+                double costoHorasCompletas = Math.ceil(cantHoras * tarifaDia.getMontoHora());
+
+                // Calcular el costo total sumando todas las partes
+                double costoTotal = montoFijoAlquiler + costoMinutosFraccionados + costoHorasCompletas;
+
+                return costoTotal;
+            } else {
+                // Manejar el caso en que no haya tarifa para el día de la semana
+                throw new NoSuchElementException("No hay tarifa definida para el día de la semana: " + diaSemana);
+            }
         }
     }
 
-    private double obtenerDescuentoPorDiaPromocional(LocalDateTime fechaHoraRetiro) {
-        return 0.5;
-    }
-
-    private boolean esDiaPromocional() {
-        return true;
-    }
 
     private long calcularDuracionEnMinutos(LocalDateTime fechaHoraRetiro, LocalDateTime fechaHoraDevolucion) {
 
@@ -175,7 +202,7 @@ public class AlquilerServiceImpl implements AlquilerService {
             // Calcular el monto total del alquiler
             double montoTotal = calcularMontoTotal(alquiler, distanciaEnKm);
             log.info("Monto total del alquiler: {}", montoTotal);
-
+            /*
             // Aplicar descuento si es un día promocional
             if (esDiaPromocional()) {
                 double porcentajeDescuento = obtenerDescuentoPorDiaPromocional(alquiler.getFechaHoraRetiro());
@@ -183,6 +210,8 @@ public class AlquilerServiceImpl implements AlquilerService {
                 log.info("Descuento aplicado: {}%", porcentajeDescuento * 100);
             }
 
+
+             */
             // Llamada al microservicio externo de cotizaciones
             String cotizacionApiUrl = "http://34.82.105.125:8080/convertir";
             HttpHeaders headers = new HttpHeaders();
@@ -270,6 +299,4 @@ public class AlquilerServiceImpl implements AlquilerService {
             throw new IllegalArgumentException("Error al analizar la respuesta del microservicio", e);
         }
     }
-
 }
-
