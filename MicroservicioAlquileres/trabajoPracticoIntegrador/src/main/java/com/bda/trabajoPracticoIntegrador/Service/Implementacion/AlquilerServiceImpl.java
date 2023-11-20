@@ -1,12 +1,11 @@
 package com.bda.trabajoPracticoIntegrador.Service.Implementacion;
 
 import com.bda.trabajoPracticoIntegrador.Dtos.AlquilerDto;
-import com.bda.trabajoPracticoIntegrador.Dtos.EstacionDto;
-import com.bda.trabajoPracticoIntegrador.Entity.Alquileres;
-import com.bda.trabajoPracticoIntegrador.Entity.Tarifas;
-import com.bda.trabajoPracticoIntegrador.Repository.AlquileresRepository;
+import com.bda.trabajoPracticoIntegrador.Entity.Alquiler;
+import com.bda.trabajoPracticoIntegrador.Entity.Tarifa;
+import com.bda.trabajoPracticoIntegrador.Repository.AlquilerRepository;
 import com.bda.trabajoPracticoIntegrador.Repository.TarifaRepository;
-import com.bda.trabajoPracticoIntegrador.Service.Interface.AlquileresService;
+import com.bda.trabajoPracticoIntegrador.Service.Interface.AlquilerService;
 import com.bda.trabajoPracticoIntegrador.Service.Interface.EstacionService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -25,14 +24,14 @@ import java.util.Optional;
 
 @Service
 @Slf4j
-public class AlquileresImpl implements AlquileresService {
+public class AlquilerServiceImpl implements AlquilerService {
 
-    private AlquileresRepository repository;
+    private AlquilerRepository repository;
     private TarifaRepository tarifasRepository;
     private RestTemplate restTemplate;
     private EstacionService estacionService;
 
-    public AlquileresImpl(AlquileresRepository repository, RestTemplate restTemplate, TarifaRepository tarifasRepository, EstacionService estacionService) {
+    public AlquilerServiceImpl(AlquilerRepository repository, RestTemplate restTemplate, TarifaRepository tarifasRepository, EstacionService estacionService) {
         this.repository = repository;
         this.restTemplate = restTemplate;
         this.tarifasRepository = tarifasRepository;
@@ -41,13 +40,13 @@ public class AlquileresImpl implements AlquileresService {
 
 
     @Override
-    public Alquileres update(int id, Alquileres alquileres) {
-        Optional<Alquileres> optionalAlquileres = repository.findById(id);
+    public Alquiler update(int id, Alquiler alquiler) {
+        Optional<Alquiler> optionalAlquileres = repository.findById(id);
 
         if (optionalAlquileres.isPresent()) {
-            Alquileres alquilerEncontrado = optionalAlquileres.get();
+            Alquiler alquilerEncontrado = optionalAlquileres.get();
 
-            alquilerEncontrado.setMonto(alquileres.getMonto());
+            alquilerEncontrado.setMonto(alquiler.getMonto());
 
             return repository.save(alquilerEncontrado);
 
@@ -62,12 +61,12 @@ public class AlquileresImpl implements AlquileresService {
     }
 
     @Override
-    public Alquileres getById(int id) {
-        Optional<Alquileres> optionalAlquileres = repository.findById(id);
+    public Alquiler getById(int id) {
+        Optional<Alquiler> optionalAlquileres = repository.findById(id);
         return optionalAlquileres.orElse(null);
     }
 
-    public Alquileres iniciarAlquiler(String idCliente, int estacionRetiroId) {
+    public Alquiler iniciarAlquiler(String idCliente, int estacionRetiroId) {
         // Verificar si el cliente está registrado en el sistemaelado y la estación tenga una bicicleta disponible)
 
         // Realizar las validaciones necesarias antes de iniciar  alquiler
@@ -75,7 +74,7 @@ public class AlquileresImpl implements AlquileresService {
         // Obtener la información de la estación de retiro
 
         // Crear una instancia de Alquileres y asignar los valores necesarios
-        Alquileres nuevoAlquiler = new Alquileres();
+        Alquiler nuevoAlquiler = new Alquiler();
         nuevoAlquiler.iniciar(idCliente, estacionRetiroId);
 
         // Guardar la instancia inc evoAlquiler);
@@ -83,28 +82,30 @@ public class AlquileresImpl implements AlquileresService {
     }
 
     @Override
-    public List<Alquileres> getAll() {
+    public List<Alquiler> getAll() {
         return repository.findAll();
     }
 
-    public List<Tarifas> obtenerTarifas() {
+    public List<Tarifa> obtenerTarifas() {
         return tarifasRepository.findAll();
     }
 
-    public double calcularMontoTotal(Alquileres alquiler, double distanciaEnKm) {
-        List<Tarifas> tarifasList = obtenerTarifas();
+    public double calcularMontoTotal(Alquiler alquiler, double distanciaEnKm) {
+        List<Tarifa> tarifaList = obtenerTarifas();
+
+        double costoMinutosFraccionados = 0;
 
     // Obtener el día de la semana de la fecha de retiro
         int diaSemana = alquiler.getFechaHoraRetiro().getDayOfWeek().getValue();
         DayOfWeek dayOfWeek = DayOfWeek.of(diaSemana);
 
     // Encontrar la tarifa correspondiente al día de la semana
-        Optional<Tarifas> tarifaOpt = tarifasList.stream()
+        Optional<Tarifa> tarifaOpt = tarifaList.stream()
                 .filter(tarifa -> tarifa.getDiaSemana() == diaSemana)
                 .findFirst();
 
         if (tarifaOpt.isPresent()) {
-            Tarifas tarifa = tarifaOpt.get();
+            Tarifa tarifa = tarifaOpt.get();
 
             // Calcular la duración del alquiler en minutos
             long duracionEnMinutos = calcularDuracionEnMinutos(alquiler.getFechaHoraRetiro(), alquiler.getFechaHoraDevolucion());
@@ -115,7 +116,7 @@ public class AlquileresImpl implements AlquileresService {
             
             if (excedenteMinutos <= 30) {
 
-                double costoMinutosFraccionados = Math.min(duracionEnMinutos, 30) * tarifa.getMontoMinutoFraccion();
+                costoMinutosFraccionados = Math.min(duracionEnMinutos, 30) * tarifa.getMontoMinutoFraccion();
 
             } else {
                 cantHoras += 1;
@@ -156,10 +157,10 @@ public class AlquileresImpl implements AlquileresService {
         return duration.toMinutes();
     }
 
-    public Alquileres finalizarAlquiler(AlquilerDto alquilerDto, String moneda) {
+    public Alquiler finalizarAlquiler(AlquilerDto alquilerDto, String moneda) {
         log.info("Iniciando finalizarAlquiler para el alquiler con ID() ", alquilerDto.getId());
         // Obtener la información del alquiler
-        Alquileres alquiler = getById(alquilerDto.getId());
+        Alquiler alquiler = getById(alquilerDto.getId());
         log.info("Alquiler: {}", alquiler);
         if (alquiler != null && alquiler.getFechaHoraDevolucion() == null) {
  

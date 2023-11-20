@@ -1,9 +1,9 @@
 package com.bda.trabajoPracticoIntegrador.Controller;
 
 import com.bda.trabajoPracticoIntegrador.Dtos.EstacionDto;
-import com.bda.trabajoPracticoIntegrador.Entity.Alquileres;
+import com.bda.trabajoPracticoIntegrador.Entity.Alquiler;
 import com.bda.trabajoPracticoIntegrador.Request.IniciarAlquilerRequest;
-import com.bda.trabajoPracticoIntegrador.Service.Interface.AlquileresService;
+import com.bda.trabajoPracticoIntegrador.Service.Interface.AlquilerService;
 import com.bda.trabajoPracticoIntegrador.Service.Interface.EstacionService;
 
 import lombok.extern.slf4j.Slf4j;
@@ -14,56 +14,50 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import com.bda.trabajoPracticoIntegrador.Dtos.AlquilerDto;
 
-import java.sql.Timestamp;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
 import java.util.List;
-import java.util.Map;
-import java.util.NoSuchElementException;
 
 @RestController
 @RequestMapping("/api/alquileres")
 @Slf4j
-public class AlquileresController {
+public class AlquilerController {
 
-    private AlquileresService service;
+    private AlquilerService service;
     private RestTemplate restTemplate;
     private EstacionService estacionService;
 
     @Autowired
-    public AlquileresController(AlquileresService service, RestTemplate restTemplate, EstacionService estacionService) {
+    public AlquilerController(AlquilerService service, RestTemplate restTemplate, EstacionService estacionService) {
         this.service = service;
         this.restTemplate = restTemplate;
         this.estacionService = estacionService;
     }
 
     @GetMapping
-    public ResponseEntity<List<Alquileres>> getAll() {
-        List<Alquileres> values = service.getAll();
+    public ResponseEntity<List<Alquiler>> getAll() {
+        List<Alquiler> values = service.getAll();
         return ResponseEntity.ok(values);
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<AlquilerDto> getById(@PathVariable int id) {
-        Alquileres alquileres = service.getById(id);
-        if (alquileres != null) {
-            int estacionRetiroId = alquileres.getEstacionRetiro();
-            int estacionDevolucionId = alquileres.getEstacionDevolucion();
+        Alquiler alquiler = service.getById(id);
+        if (alquiler != null) {
+            int estacionRetiroId = alquiler.getEstacionRetiro();
+            int estacionDevolucionId = alquiler.getEstacionDevolucion();
 
             EstacionDto estacionRetiroDto = estacionService.obtenerEstacionDto(estacionRetiroId);
             EstacionDto estacionDevolucionDto = estacionService.obtenerEstacionDto(estacionDevolucionId);
 
             AlquilerDto alquilerDto = new AlquilerDto();
-            alquilerDto.setId(alquileres.getId());
-            alquilerDto.setIdCliente(alquileres.getIdCliente());
-            alquilerDto.setEstado(alquileres.getEstado());
+            alquilerDto.setId(alquiler.getId());
+            alquilerDto.setIdCliente(alquiler.getIdCliente());
+            alquilerDto.setEstado(alquiler.getEstado());
             alquilerDto.setEstacionRetiro(estacionRetiroDto);
             alquilerDto.setEstacionDevolucion(estacionDevolucionDto);
-            alquilerDto.setFechaHoraRetiro(LocalDateTime.parse(String.valueOf(alquileres.getFechaHoraRetiro())));
-            alquilerDto.setFechaHoraDevolucion(LocalDateTime.parse(String.valueOf(alquileres.getFechaHoraDevolucion())));
-            alquilerDto.setMonto(alquileres.getMonto());
+            alquilerDto.setFechaHoraRetiro(LocalDateTime.parse(String.valueOf(alquiler.getFechaHoraRetiro())));
+            alquilerDto.setFechaHoraDevolucion(LocalDateTime.parse(String.valueOf(alquiler.getFechaHoraDevolucion())));
+            alquilerDto.setMonto(alquiler.getMonto());
 
             return ResponseEntity.ok(alquilerDto);
 
@@ -137,8 +131,8 @@ public class AlquileresController {
  */
 
     @PostMapping
-    public ResponseEntity<Alquileres> iniciarAlquiler(@RequestBody IniciarAlquilerRequest request) {
-        Alquileres alquiler = service.iniciarAlquiler(request.getIdCliente(), request.getEstacionRetiroId());
+    public ResponseEntity<Alquiler> iniciarAlquiler(@RequestBody IniciarAlquilerRequest request) {
+        Alquiler alquiler = service.iniciarAlquiler(request.getIdCliente(), request.getEstacionRetiroId());
 
         if (alquiler != null) {
             return ResponseEntity.ok(alquiler);
@@ -151,11 +145,11 @@ public class AlquileresController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable int id) {
-        Alquileres alquileres = service.getById(id);
+        Alquiler alquiler = service.getById(id);
 
-        if (alquileres != null) {
-            int estacionRetiroId = alquileres.getEstacionRetiro();
-            int estacionDevolucionId = alquileres.getEstacionDevolucion();
+        if (alquiler != null) {
+            int estacionRetiroId = alquiler.getEstacionRetiro();
+            int estacionDevolucionId = alquiler.getEstacionDevolucion();
 
             // Realiza la lógica para eliminar la relación con estaciones si es necesario
 
@@ -292,7 +286,7 @@ public class AlquileresController {
 
      */
     @PutMapping("/finalizar/{id}")
-    public ResponseEntity<Alquileres> finalizarAlquiler(
+    public ResponseEntity<Alquiler> finalizarAlquiler(
             @PathVariable int id,
             @RequestParam(required = false, defaultValue = "ARS") String moneda,
             @RequestBody AlquilerDto alquilerDto) {
@@ -304,9 +298,9 @@ public class AlquileresController {
             }
 
             // Verificar que el alquiler con el ID proporcionado existe
-            Alquileres alquiler = service.getById(id);
+            Alquiler alquiler = service.getById(id);
             if (alquiler != null) {
-                Alquileres alquilerFinalizado = service.finalizarAlquiler(alquilerDto, moneda);
+                Alquiler alquilerFinalizado = service.finalizarAlquiler(alquilerDto, moneda);
                 log.info("Alquiler finalizado con éxito.");
                 return ResponseEntity.ok(alquilerFinalizado);
             } else {

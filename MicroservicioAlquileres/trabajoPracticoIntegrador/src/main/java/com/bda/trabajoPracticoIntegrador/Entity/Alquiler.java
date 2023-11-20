@@ -4,13 +4,12 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 
-import java.sql.Timestamp;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "ALQUILERES")
 @Data
-public class Alquileres {
+public class Alquiler {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -42,7 +41,7 @@ public class Alquileres {
     @JsonIgnore
     @OneToOne
     @JoinColumn(name = "ID_TARIFA")
-    private Tarifas idTarifa;
+    private Tarifa idTarifa;
 
 
 

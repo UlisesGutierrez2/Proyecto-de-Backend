@@ -2,14 +2,12 @@ package com.bda.trabajoPracticoIntegrador.Entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import jakarta.persistence.criteria.CriteriaBuilder;
 import lombok.Data;
-import lombok.Getter;
 
 @Entity
 @Table(name = "TARIFAS")
 @Data
-public class Tarifas {
+public class Tarifa {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "ID")

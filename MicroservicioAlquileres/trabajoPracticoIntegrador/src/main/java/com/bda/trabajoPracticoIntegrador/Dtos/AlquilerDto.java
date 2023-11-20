@@ -1,9 +1,7 @@
 package com.bda.trabajoPracticoIntegrador.Dtos;
 
-import com.bda.trabajoPracticoIntegrador.Entity.Tarifas;
+import com.bda.trabajoPracticoIntegrador.Entity.Tarifa;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.OneToOne;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -34,7 +32,7 @@ public class AlquilerDto {
 
      */
     @JsonIgnore
-    private Tarifas idTarifa;
+    private Tarifa idTarifa;
 
     public AlquilerDto(int id) {
         this.id = id;
