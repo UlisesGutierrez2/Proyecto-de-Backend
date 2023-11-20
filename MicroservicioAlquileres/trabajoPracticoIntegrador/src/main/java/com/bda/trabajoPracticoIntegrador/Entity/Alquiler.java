@@ -51,4 +51,11 @@ public class Alquiler {
         estado = 1;
         fechaHoraRetiro = LocalDateTime.now();
     }
+
+    public void finalizar(double montoFinal) {
+        this.monto = montoFinal;
+        estado = 2;
+        fechaHoraDevolucion = LocalDateTime.now();
+
+    }
 }
