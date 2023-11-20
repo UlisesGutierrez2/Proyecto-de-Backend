@@ -233,7 +233,7 @@ public class AlquilerServiceImpl implements AlquilerService {
             headers.setContentType(MediaType.APPLICATION_JSON);
 
             // Armar la solicitud
-            String requestBody = "{\"moneda_destino\":\"" + "USD" + "\",\"importe\":" + montoTotal + "}";
+            String requestBody = "{\"moneda_destino\":\"" + moneda + "\",\"importe\":" + montoTotal + "}";
 
             // Configurar la solicitud HTTP
             HttpEntity<String> entity = new HttpEntity<>(requestBody, headers);
