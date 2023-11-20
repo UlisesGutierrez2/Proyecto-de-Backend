@@ -2,7 +2,10 @@ package com.bda.trabajoPracticoIntegrador.Controller;
 
 import com.bda.trabajoPracticoIntegrador.Dtos.EstacionDto;
 import com.bda.trabajoPracticoIntegrador.Entity.Alquileres;
+import com.bda.trabajoPracticoIntegrador.Request.IniciarAlquilerRequest;
 import com.bda.trabajoPracticoIntegrador.Service.Interface.AlquileresService;
+import com.bda.trabajoPracticoIntegrador.Service.Interface.EstacionService;
+
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
@@ -27,11 +30,13 @@ public class AlquileresController {
 
     private AlquileresService service;
     private RestTemplate restTemplate;
+    private EstacionService estacionService;
 
     @Autowired
-    public AlquileresController(AlquileresService service, RestTemplate restTemplate) {
+    public AlquileresController(AlquileresService service, RestTemplate restTemplate, EstacionService estacionService) {
         this.service = service;
         this.restTemplate = restTemplate;
+        this.estacionService = estacionService;
     }
 
     @GetMapping
@@ -47,8 +52,8 @@ public class AlquileresController {
             int estacionRetiroId = alquileres.getEstacionRetiro();
             int estacionDevolucionId = alquileres.getEstacionDevolucion();
 
-            EstacionDto estacionRetiroDto = getEstacionFromOtherService(estacionRetiroId);
-            EstacionDto estacionDevolucionDto = getEstacionFromOtherService(estacionDevolucionId);
+            EstacionDto estacionRetiroDto = estacionService.obtenerEstacionDto(estacionRetiroId);
+            EstacionDto estacionDevolucionDto = estacionService.obtenerEstacionDto(estacionDevolucionId);
 
             AlquilerDto alquilerDto = new AlquilerDto();
             alquilerDto.setId(alquileres.getId());
@@ -67,10 +72,7 @@ public class AlquileresController {
         }
     }
 
-    private EstacionDto getEstacionFromOtherService(int estacionId) {
-        String url = "http://localhost:8084/api/estaciones/" + estacionId;
-        return restTemplate.getForObject(url, EstacionDto.class);
-    }
+
 /*
     // Método para convertir un String de fecha a Timestamp
     private LocalDateTime parseFecha(String fecha) {
@@ -134,9 +136,9 @@ public class AlquileresController {
 
  */
 
-    @PostMapping("/iniciar")
-    public ResponseEntity<Alquileres> iniciarAlquiler(@RequestParam String idCliente, @RequestParam int estacionRetiroId, @RequestParam int estacionDevolucionId) {
-        Alquileres alquiler = service.iniciarAlquiler(idCliente, estacionRetiroId, estacionDevolucionId);
+    @PostMapping
+    public ResponseEntity<Alquileres> iniciarAlquiler(@RequestBody IniciarAlquilerRequest request) {
+        Alquileres alquiler = service.iniciarAlquiler(request.getIdCliente(), request.getEstacionRetiroId());
 
         if (alquiler != null) {
             return ResponseEntity.ok(alquiler);

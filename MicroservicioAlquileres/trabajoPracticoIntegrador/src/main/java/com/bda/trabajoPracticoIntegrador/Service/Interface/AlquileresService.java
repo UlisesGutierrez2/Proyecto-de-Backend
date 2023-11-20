@@ -16,7 +16,8 @@ public interface AlquileresService {
 
  List<Alquileres> getAll();
 
- Alquileres iniciarAlquiler(String idCliente, int estacionRetiroId, int estacionDevolucionId);
+ Alquileres iniciarAlquiler(String idCliente, int estacionRetiroId);
 
  Alquileres finalizarAlquiler(AlquilerDto alquilerDto, String moneda);
+ 
 }

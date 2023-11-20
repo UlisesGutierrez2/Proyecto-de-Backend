@@ -44,4 +44,12 @@ public class Alquileres {
     @JoinColumn(name = "ID_TARIFA")
     private Tarifas idTarifa;
 
+
+
+    public void iniciar(String idCliente, int estacionRetiroId) {
+        this.idCliente = idCliente;
+        this.estacionRetiro = estacionRetiroId;
+        estado = 1;
+        fechaHoraRetiro = LocalDateTime.now();
+    }
 }

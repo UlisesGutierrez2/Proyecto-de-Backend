@@ -7,6 +7,7 @@ import com.bda.trabajoPracticoIntegrador.Entity.Tarifas;
 import com.bda.trabajoPracticoIntegrador.Repository.AlquileresRepository;
 import com.bda.trabajoPracticoIntegrador.Repository.TarifaRepository;
 import com.bda.trabajoPracticoIntegrador.Service.Interface.AlquileresService;
+import com.bda.trabajoPracticoIntegrador.Service.Interface.EstacionService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
@@ -25,14 +26,17 @@ import java.util.Optional;
 @Service
 @Slf4j
 public class AlquileresImpl implements AlquileresService {
+
     private AlquileresRepository repository;
     private TarifaRepository tarifasRepository;
     private RestTemplate restTemplate;
+    private EstacionService estacionService;
 
-    public AlquileresImpl(AlquileresRepository repository, RestTemplate restTemplate, TarifaRepository tarifasRepository) {
+    public AlquileresImpl(AlquileresRepository repository, RestTemplate restTemplate, TarifaRepository tarifasRepository, EstacionService estacionService) {
         this.repository = repository;
         this.restTemplate = restTemplate;
         this.tarifasRepository = tarifasRepository;
+        this.estacionService = estacionService;
     }
 
 
@@ -63,21 +67,18 @@ public class AlquileresImpl implements AlquileresService {
         return optionalAlquileres.orElse(null);
     }
 
-    public Alquileres iniciarAlquiler(String idCliente, int estacionRetiroId, int estacionDevolucionId) {
-        // Verificar si el cliente está registrado en el sistema
-        // Realizar las validaciones necesarias antes de iniciar el alquiler
-        // (por ejemplo, asegurarse de que el cliente esté registrado y la estación tenga una bicicleta disponible)
+    public Alquileres iniciarAlquiler(String idCliente, int estacionRetiroId) {
+        // Verificar si el cliente está registrado en el sistemaelado y la estación tenga una bicicleta disponible)
 
+        // Realizar las validaciones necesarias antes de iniciar  alquiler
+        // (por ejemplo, asegurarse de que el cliente esté registr
         // Obtener la información de la estación de retiro
 
         // Crear una instancia de Alquileres y asignar los valores necesarios
         Alquileres nuevoAlquiler = new Alquileres();
-        nuevoAlquiler.setIdCliente(idCliente);
-        nuevoAlquiler.setEstado(1);
-        nuevoAlquiler.setEstacionRetiro(estacionRetiroId);
-        nuevoAlquiler.setFechaHoraRetiro(LocalDateTime.now());
+        nuevoAlquiler.iniciar(idCliente, estacionRetiroId);
 
-        // Guardar la instancia en la base de datos
+        // Guardar la instancia inc evoAlquiler);
         return repository.save(nuevoAlquiler);
     }
 
@@ -108,11 +109,20 @@ public class AlquileresImpl implements AlquileresService {
             // Calcular la duración del alquiler en minutos
             long duracionEnMinutos = calcularDuracionEnMinutos(alquiler.getFechaHoraRetiro(), alquiler.getFechaHoraDevolucion());
 
-            // Calcular el costo fraccionado por minuto hasta el minuto 30
-            double costoMinutosFraccionados = Math.min(duracionEnMinutos, 30) * tarifa.getMontoMinutoFraccion();
+            int cantHoras = (int) (duracionEnMinutos / 60);
+            
+            int excedenteMinutos = (int) (duracionEnMinutos % 60);
+            
+            if (excedenteMinutos <= 30) {
+
+                double costoMinutosFraccionados = Math.min(duracionEnMinutos, 30) * tarifa.getMontoMinutoFraccion();
+
+            } else {
+                cantHoras += 1;
+            }
 
             // Calcular el costo por hora completa a partir del minuto 31
-            double costoHorasCompletas = Math.ceil((duracionEnMinutos - 30) / 60.0) * tarifa.getMontoHora();
+            double costoHorasCompletas = Math.ceil(cantHoras * tarifa.getMontoHora());
 
             // Calcular el costo total sumando todas las partes
             double costoTotal = tarifa.getMontoFijoAlquiler() + costoMinutosFraccionados + costoHorasCompletas;
@@ -152,18 +162,12 @@ public class AlquileresImpl implements AlquileresService {
         Alquileres alquiler = getById(alquilerDto.getId());
         log.info("Alquiler: {}", alquiler);
         if (alquiler != null && alquiler.getFechaHoraDevolucion() == null) {
-            // Obtener EstacionDto para estacion de retiro
-            EstacionDto estacionRetiroDto = alquilerDto.getEstacionRetiro();
-            log.info("Estacion Retiro: {}", estacionRetiroDto);
-            // Obtener EstacionDto para estacion de devolución
-            EstacionDto estacionDevolucionDto = alquilerDto.getEstacionDevolucion();
-            log.info("Estacion Devolución: {}", estacionDevolucionDto);
-
+ 
             // Establecer la fecha y hora de devolución
             alquiler.setFechaHoraDevolucion(LocalDateTime.now());
 
             // Calcular la distancia en kilómetros entre las estaciones de retiro y devolución
-            double distanciaEnKm = calcularDistancia(estacionRetiroDto, estacionDevolucionDto);
+            double distanciaEnKm = estacionService.calcularDistancia(alquilerDto.getEstacionRetiro().getLatitud(), alquilerDto.getEstacionRetiro().getLongitud(),alquilerDto.getEstacionDevolucion().getLatitud(), alquilerDto.getEstacionDevolucion().getLongitud());
             log.info("Distancia entre las estaciones: {} km", distanciaEnKm);
 
 
@@ -238,42 +242,6 @@ public class AlquileresImpl implements AlquileresService {
             log.error("Alquiler no encontrado o ya devuelto");
             throw new NoSuchElementException("Alquiler no encontrado o ya devuelto");
         }
-    }
-
-    public double calcularDistancia(EstacionDto estacion1, EstacionDto estacion2) {
-
-        if (estacion1 == null || estacion2 == null) {
-            throw new IllegalArgumentException("Los objetos EstacionDto no pueden ser nulos.");
-        }
-
-        double lat1 = estacion1.getLatitud();
-        double lon1 = estacion1.getLongitud();
-        double lat2 = estacion2.getLatitud();
-        double lon2 = estacion2.getLongitud();
-
-        // Radio de la Tierra en kilómetros
-        double radioTierra = 6371;
-
-        // Convertir las coordenadas de grados a radianes
-        lat1 = Math.toRadians(lat1);
-        lon1 = Math.toRadians(lon1);
-        lat2 = Math.toRadians(lat2);
-        lon2 = Math.toRadians(lon2);
-
-        // Calcular las diferencias de coordenadas
-        double dLat = lat2 - lat1;
-        double dLon = lon2 - lon1;
-
-        // Fórmula de la distancia euclidiana
-        double a = Math.sin(dLat / 2) * Math.sin(dLat / 2)
-                + Math.cos(lat1) * Math.cos(lat2)
-                * Math.sin(dLon / 2) * Math.sin(dLon / 2);
-        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-        // Distancia en kilómetros
-        double distancia = radioTierra * c;
-
-        return distancia;
     }
 
 
