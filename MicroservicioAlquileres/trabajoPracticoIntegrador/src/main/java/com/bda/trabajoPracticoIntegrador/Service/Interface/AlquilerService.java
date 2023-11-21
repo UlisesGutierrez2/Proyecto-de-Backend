@@ -18,6 +18,6 @@ public interface AlquilerService {
 
  Alquiler iniciarAlquiler(String idCliente, int estacionRetiroId);
 
- Alquiler finalizarAlquiler(int id, String moneda);
+ Alquiler finalizarAlquiler(int id, String moneda, int estacionDevolucionId);
  
 }

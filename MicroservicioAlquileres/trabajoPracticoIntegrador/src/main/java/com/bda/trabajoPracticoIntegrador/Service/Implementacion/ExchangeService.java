@@ -94,5 +94,4 @@ public class ExchangeService {
             throw new RuntimeException("Error al analizar la respuesta del microservicio", e);
         }
     }
-
 }

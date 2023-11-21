@@ -2,6 +2,7 @@ package com.bda.trabajoPracticoIntegrador.Controller;
 
 import com.bda.trabajoPracticoIntegrador.Dtos.EstacionDto;
 import com.bda.trabajoPracticoIntegrador.Entity.Alquiler;
+import com.bda.trabajoPracticoIntegrador.Request.FinalizarAlquilerRequest;
 import com.bda.trabajoPracticoIntegrador.Request.IniciarAlquilerRequest;
 import com.bda.trabajoPracticoIntegrador.Service.Interface.AlquilerService;
 import com.bda.trabajoPracticoIntegrador.Service.Interface.EstacionService;
@@ -85,8 +86,6 @@ public class AlquilerController {
         Alquiler alquiler = service.getById(id);
 
         if (alquiler != null) {
-            int estacionRetiroId = alquiler.getEstacionRetiro();
-            int estacionDevolucionId = alquiler.getEstacionDevolucion();
 
             // Realiza la lógica para eliminar la relación con estaciones si es necesario
 
@@ -100,13 +99,13 @@ public class AlquilerController {
     @PutMapping("/finalizar/{id}")
     public ResponseEntity<Alquiler> finalizarAlquiler(
             @PathVariable int id,
-            @RequestParam(required = false, defaultValue = "ARS") String moneda) {
+            @RequestBody FinalizarAlquilerRequest request) {
         try {
 
             // Verificar que el alquiler con el ID proporcionado existe
             Alquiler alquiler = service.getById(id);
             if (alquiler != null) {
-                Alquiler alquilerFinalizado = service.finalizarAlquiler(id, moneda);
+                Alquiler alquilerFinalizado = service.finalizarAlquiler(id, request.getMoneda(), request.getEstacionDevolucion());
                 log.info("Alquiler finalizado con éxito.");
                 return ResponseEntity.ok(alquilerFinalizado);
             } else {
