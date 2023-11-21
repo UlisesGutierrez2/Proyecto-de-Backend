@@ -19,11 +19,14 @@ public class EstacionController {
         this.service = service;
     }
 
+    /*
     @GetMapping
     public ResponseEntity<List<Estacion>> getAll() {
         List<Estacion> values = service.getAll();
         return ResponseEntity.ok(values);
     }
+
+     */
 
     @GetMapping("/{id}")
     public ResponseEntity<Estacion> getById(@PathVariable int id) {
@@ -49,18 +52,20 @@ public class EstacionController {
         return ResponseEntity.ok(estacionActualizada);
     }
 
-    @GetMapping("/ubicacion")
-    public ResponseEntity<?> getByUbicacion(@RequestParam(value = "latitud") Double latitud,
-                                            @RequestParam(value = "longitud") Double longitud) {
-        if (latitud == null || longitud == null) {
-            return ResponseEntity.badRequest().body("Las coordenadas son inválidas.");
+    @GetMapping
+    public ResponseEntity<?> getByUbicacionOrAll(@RequestParam(value = "latitud", required = false) Double latitud,
+                                                 @RequestParam(value = "longitud", required = false) Double longitud) {
+        if (latitud != null && longitud != null) {
+            // Si se proporcionan latitud y longitud, llamar a getByUbicacion
+            Estacion estacion = service.getEstacionMasCercana(latitud, longitud);
+            if (estacion == null) {
+                return ResponseEntity.notFound().build();
+            }
+            return ResponseEntity.ok(estacion);
+        } else {
+            // Si no se proporcionan latitud y longitud, llamar a getAll
+            List<Estacion> values = service.getAll();
+            return ResponseEntity.ok(values);
         }
-
-        Estacion estacion = service.getEstacionMasCercana(latitud, longitud);
-        if (estacion == null) {
-            return ResponseEntity.notFound().build();
-        }
-
-        return ResponseEntity.ok(estacion);
     }
 }

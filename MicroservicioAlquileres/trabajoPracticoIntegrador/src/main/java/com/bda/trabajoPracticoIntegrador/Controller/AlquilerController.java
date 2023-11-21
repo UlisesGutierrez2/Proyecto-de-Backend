@@ -67,69 +67,6 @@ public class AlquilerController {
     }
 
 
-/*
-    // Método para convertir un String de fecha a Timestamp
-    private LocalDateTime parseFecha(String fecha) {
-        // Intentar varios patrones de formato
-        String[] patrones = {"yyyy-MM-dd HH:mm:ss", "yyyy-MM-dd'T'HH:mm:ss", "yyyy-MM-dd'T'HH:mm:ssXXX"};
-
-        for (String patron : patrones) {
-            try {
-                DateTimeFormatter formatter = DateTimeFormatter.ofPattern(patron);
-                log.trace("Fecha antes del análisis: " + fecha);
-                return LocalDateTime.parse(fecha, formatter);
-            } catch (DateTimeParseException e) {
-                // Continuar con el próximo patrón si falla
-            }
-        }
-
-        // Si no se pudo analizar con ninguno de los patrones, lanzar una excepción
-        log.error("Error al parsear la fecha: " + fecha);
-        throw new DateTimeParseException("No se pudo analizar la fecha: " + fecha, fecha, 0);
-    }
-
-
- */
-
-
-/*
-
-    @PostMapping
-    public ResponseEntity<Alquileres> addAlquiler(@RequestBody AlquilerDto alquiler) {
-        int estacionRetiroId = alquiler.getEstacionRetiro().getId();
-        int estacionDevolucionId = alquiler.getEstacionDevolucion().getId();
-
-        if (estacionRetiroId == 0 || estacionDevolucionId == 0) {
-            // Manejo de estaciones no válidas, por ejemplo, puedes devolver un error 400 (Bad Request)
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-        }
-
-        EstacionDto estacionRetiroDto = getEstacionFromOtherService(estacionRetiroId);
-        EstacionDto estacionDevolucionDto = getEstacionFromOtherService(estacionDevolucionId);
-
-        if(estacionDevolucionDto == null || estacionRetiroDto == (null)) {
-            return ResponseEntity.notFound().build();
-        }
-
-        // Crear una instancia de Alquileres y asignar los valores directamente
-        Alquileres nuevoAlquiler = new Alquileres();
-        nuevoAlquiler.setIdCliente(alquiler.getIdCliente());
-        nuevoAlquiler.setEstado(alquiler.getEstado());
-        nuevoAlquiler.setEstacionRetiro(estacionRetiroDto.getId());
-        nuevoAlquiler.setEstacionDevolucion(estacionDevolucionDto.getId());
-        nuevoAlquiler.setFechaHoraRetiro(parseFecha(String.valueOf(alquiler.getFechaHoraRetiro())));
-        nuevoAlquiler.setFechaHoraDevolucion(parseFecha(String.valueOf(alquiler.getFechaHoraDevolucion())));  nuevoAlquiler.setMonto(alquiler.getMonto());
-
-        nuevoAlquiler.setIdTarifa(alquiler.getIdTarifa());
-
-        // Guardar la instancia en la base de datos
-        Alquileres resultado = service.add(nuevoAlquiler);
-
-        return ResponseEntity.ok(resultado);
-    }
-
- */
-
     @PostMapping
     public ResponseEntity<Alquiler> iniciarAlquiler(@RequestBody IniciarAlquilerRequest request) {
         Alquiler alquiler = service.iniciarAlquiler(request.getIdCliente(), request.getEstacionRetiroId());
