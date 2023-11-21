@@ -7,6 +7,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.NoSuchElementException;
+
 @Service
 public class ExchangeService {
     private final RestTemplate restTemplate;
@@ -26,21 +28,45 @@ public class ExchangeService {
         HttpEntity<String> entity = new HttpEntity<>(requestBody, headers);
 
         try {
+            // Log para registrar la solicitud al microservicio de cotizaciones
+            System.out.println(cotizacionApiUrl);
+
             // Realizar la solicitud POST
             ResponseEntity<String> response = restTemplate.exchange(cotizacionApiUrl, HttpMethod.POST, entity, String.class);
 
-            // Verificar si la solicitud fue exitosa
+            // Log para registrar la respuesta del microservicio
+            System.out.println(response);
+
+            System.out.println(response.getStatusCode().toString());
+
+            // Manejar la respuesta del microservicio de cotizaciones según sea necesario
             if (response.getStatusCode().is2xxSuccessful()) {
                 // Extraer y manejar la respuesta del microservicio
                 String cotizacionResponse = response.getBody();
-                return parsearRespuestaDelMicroservicio(cotizacionResponse, monedaDestino);
+
+                // Log para registrar la respuesta detallada del microservicio
+                System.out.println(cotizacionResponse);
+
+                // Parsear la respuesta del microservicio para obtener el monto convertido
+                double montoConvertido = parsearRespuestaDelMicroservicio(cotizacionResponse, monedaDestino);
+
+                return montoConvertido;
+                // el api ya hace este calculo
+                // double montoFinal = montoConvertido * montoTotal;
+
             } else {
+                // Log para registrar el fallo de la solicitud al microservicio de cotizaciones
+                System.out.println(response.getStatusCode());
+
                 // Manejar el caso en que la solicitud al microservicio de cotizaciones falla
                 throw new HttpClientErrorException(response.getStatusCode());
             }
         } catch (Exception e) {
-            // Manejar cualquier excepción ocurrida durante la ejecución
-            throw new RuntimeException("Error al realizar la solicitud al microservicio de cotizaciones", e);
+            // Log para registrar cualquier excepción ocurrida durante la ejecución del bloque try
+            System.out.println(e);
+
+            // Puedes manejar la excepción según tus necesidades
+            throw e;
         }
     }
 

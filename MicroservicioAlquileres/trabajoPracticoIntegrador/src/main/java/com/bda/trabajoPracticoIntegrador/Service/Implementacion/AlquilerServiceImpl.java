@@ -1,6 +1,7 @@
 package com.bda.trabajoPracticoIntegrador.Service.Implementacion;
 
 import com.bda.trabajoPracticoIntegrador.Dtos.AlquilerDto;
+import com.bda.trabajoPracticoIntegrador.Dtos.EstacionDto;
 import com.bda.trabajoPracticoIntegrador.Entity.Alquiler;
 import com.bda.trabajoPracticoIntegrador.Entity.Tarifa;
 import com.bda.trabajoPracticoIntegrador.Repository.AlquilerRepository;
@@ -64,7 +65,9 @@ public class AlquilerServiceImpl implements AlquilerService {
 
     @Override
     public Alquiler getById(int id) {
+        System.out.println("a");
         Optional<Alquiler> optionalAlquileres = repository.findById(id);
+        System.out.println(optionalAlquileres);
         return optionalAlquileres.orElse(null);
     }
 
@@ -180,16 +183,20 @@ public class AlquilerServiceImpl implements AlquilerService {
 
     private long calcularDuracionEnMinutos(LocalDateTime fechaHoraRetiro, LocalDateTime fechaHoraDevolucion) {
 
-        Duration duration = Duration.between(fechaHoraRetiro, fechaHoraDevolucion);
+        Duration duration = Duration.between(fechaHoraDevolucion, fechaHoraRetiro);
 
         // Devuelve la diferencia en minutos
         return duration.toMinutes();
     }
 
-    public Alquiler finalizarAlquiler(AlquilerDto alquilerDto, String moneda) {
-        log.info("Iniciando finalizarAlquiler para el alquiler con ID() ", alquilerDto.getId());
+    public Alquiler finalizarAlquiler(int id, String moneda) {
+        log.info("Iniciando finalizarAlquiler para el alquiler con ID() ", id);
         // Obtener la información del alquiler
-        Alquiler alquiler = getById(alquilerDto.getId());
+        Alquiler alquiler = getById(id);
+
+        EstacionDto estacionRetiro = estacionService.obtenerEstacionDto(alquiler.getEstacionRetiro());
+        EstacionDto estacionDevolucion = estacionService.obtenerEstacionDto(alquiler.getEstacionDevolucion());
+
         log.info("Alquiler: {}", alquiler);
         if (alquiler != null && alquiler.getFechaHoraDevolucion() == null) {
 
@@ -197,7 +204,7 @@ public class AlquilerServiceImpl implements AlquilerService {
             alquiler.setFechaHoraDevolucion(LocalDateTime.now());
 
             // Calcular la distancia en kilómetros entre las estaciones de retiro y devolución
-            double distanciaEnKm = estacionService.calcularDistancia(alquilerDto.getEstacionRetiro().getLatitud(), alquilerDto.getEstacionRetiro().getLongitud(), alquilerDto.getEstacionDevolucion().getLatitud(), alquilerDto.getEstacionDevolucion().getLongitud());
+            double distanciaEnKm = estacionService.calcularDistancia(estacionRetiro.getLatitud(), estacionRetiro.getLongitud(), estacionDevolucion.getLatitud(), estacionDevolucion.getLongitud());
             log.info("Distancia entre las estaciones: {} km", distanciaEnKm);
 
             // Calcular el monto total del alquiler
@@ -209,10 +216,7 @@ public class AlquilerServiceImpl implements AlquilerService {
             // Obtener la cotización
             double montoConvertido = exchangeService.obtenerCotizacion(cotizacionApiUrl, moneda, montoTotal);
 
-            // Calcular el monto final
-            double montoFinal = montoConvertido * montoTotal;
-
-            alquiler.finalizar(montoFinal);
+            alquiler.finalizar(montoConvertido);
 
             // Guardar la instancia actualizada en la base de datos
             return update(alquiler.getId(), alquiler);

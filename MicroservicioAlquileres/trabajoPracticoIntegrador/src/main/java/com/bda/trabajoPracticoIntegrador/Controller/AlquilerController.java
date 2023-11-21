@@ -97,27 +97,21 @@ public class AlquilerController {
         }
     }
 
-    @PutMapping
+    @PutMapping("/finalizar/{id}")
     public ResponseEntity<Alquiler> finalizarAlquiler(
             @PathVariable int id,
-            @RequestParam(required = false, defaultValue = "ARS") String moneda,
-            @RequestBody AlquilerDto alquilerDto) {
+            @RequestParam(required = false, defaultValue = "ARS") String moneda) {
         try {
-            // Verificar que el ID en la URL coincida con el ID en el cuerpo del AlquilerDto
-            if (id != alquilerDto.getId()) {
-                log.error("El ID en la URL no coincide con el ID en el cuerpo del AlquilerDto.");
-                return ResponseEntity.badRequest().build();
-            }
 
             // Verificar que el alquiler con el ID proporcionado existe
             Alquiler alquiler = service.getById(id);
             if (alquiler != null) {
-                Alquiler alquilerFinalizado = service.finalizarAlquiler(alquilerDto, moneda);
+                Alquiler alquilerFinalizado = service.finalizarAlquiler(id, moneda);
                 log.info("Alquiler finalizado con éxito.");
                 return ResponseEntity.ok(alquilerFinalizado);
             } else {
                 log.error("No se encontró el alquiler con el ID proporcionado.");
-                return ResponseEntity.notFound().build();
+                return ResponseEntity.badRequest().build();
             }
         } catch (HttpClientErrorException e) {
             log.error("Error al llamar al servicio externo.", e);
