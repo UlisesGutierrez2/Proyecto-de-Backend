@@ -2,6 +2,7 @@ package com.bda.trabajoPracticoIntegrador.Controller;
 
 import com.bda.trabajoPracticoIntegrador.Dtos.EstacionDto;
 import com.bda.trabajoPracticoIntegrador.Entity.Alquiler;
+import com.bda.trabajoPracticoIntegrador.Entity.Tarifa;
 import com.bda.trabajoPracticoIntegrador.Request.FinalizarAlquilerRequest;
 import com.bda.trabajoPracticoIntegrador.Request.IniciarAlquilerRequest;
 import com.bda.trabajoPracticoIntegrador.Service.Interface.AlquilerService;
@@ -96,7 +97,8 @@ public class AlquilerController {
         }
     }
 
-    @PutMapping("/finalizar/{id}")
+    //Finalizar
+    @PatchMapping("/{id}")
     public ResponseEntity<Alquiler> finalizarAlquiler(
             @PathVariable int id,
             @RequestBody FinalizarAlquilerRequest request) {
@@ -122,6 +124,12 @@ public class AlquilerController {
             log.error("Error inesperado.", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
+    }
+
+    @GetMapping("/tarifas")
+    public ResponseEntity<List<Tarifa>> obtenerTarifas() {
+        List<Tarifa> tarifaList = service.obtenerTarifas();
+        return ResponseEntity.ok(tarifaList);
     }
 }
 

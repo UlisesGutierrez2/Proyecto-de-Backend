@@ -6,6 +6,7 @@ import com.bda.trabajoPracticoIntegrador.Repository.AlquilerRepository;
 import com.bda.trabajoPracticoIntegrador.Repository.TarifaRepository;
 import com.bda.trabajoPracticoIntegrador.Service.Implementacion.AlquilerServiceImpl;
 import com.bda.trabajoPracticoIntegrador.Service.Implementacion.ExchangeService;
+import com.bda.trabajoPracticoIntegrador.Service.Implementacion.TarifaServiceImpl;
 import com.bda.trabajoPracticoIntegrador.Service.Interface.EstacionService;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -37,20 +38,12 @@ public class TrabajoPracticoIntegradorApplicationTests {
     @Mock
     private TarifaRepository tarifaRepository;
 
+    @InjectMocks
+    private TarifaServiceImpl tarifaService;
+
     @Mock
     private AlquilerRepository alquilerRepository;
-    @InjectMocks
-    private AlquilerServiceImpl alquilerService;
 
-
-    @Mock
-    private EstacionService estacionService;
-
-    @Mock
-    private ExchangeService exchangeService;
-
-    @Mock
-    private RestTemplate restTemplate;
 
     @Test
     public void testCalcularMontoTotalDescuento() {
@@ -58,9 +51,9 @@ public class TrabajoPracticoIntegradorApplicationTests {
         LocalDateTime fechaHoraRetiro = LocalDateTime.of(2023, 10, 13, 13, 12);
         LocalDateTime fechaHoraDevolucion = fechaHoraRetiro.plusMinutes(155);
 
-        Alquiler alquiler = mock(Alquiler.class);
-        when(alquiler.getFechaHoraRetiro()).thenReturn(fechaHoraRetiro);
-        when(alquiler.getFechaHoraDevolucion()).thenReturn(fechaHoraDevolucion);
+        Alquiler alquiler = new Alquiler();
+        alquiler.setFechaHoraDevolucion(fechaHoraDevolucion);
+        alquiler.setFechaHoraRetiro(fechaHoraRetiro);
 
         double distanciaEnKm = 50.0; // Distancia en kilómetros para la prueba
 
@@ -68,7 +61,7 @@ public class TrabajoPracticoIntegradorApplicationTests {
         Tarifa tarifa = new Tarifa();
 
         tarifa.setId(8);
-        tarifa.setTipoTarifa(1);
+        tarifa.setTipoTarifa(2);
         tarifa.setDefinicion('C');
         tarifa.setDiaSemana(null);
         tarifa.setDiaMes(13);
@@ -79,14 +72,8 @@ public class TrabajoPracticoIntegradorApplicationTests {
         tarifa.setMontoKm(75);
         tarifa.setMontoHora(175);
 
-        when(tarifaRepository.findByParams(anyInt(), anyInt(), anyInt())).thenReturn(Optional.of(tarifa));
-//        when(tarifaRepository.findByDay(anyInt())).thenReturn(Optional.of(tarifa));
-
-        // Configuración del servicio de alquiler
-        alquilerService = new AlquilerServiceImpl(alquilerRepository, restTemplate, tarifaRepository, estacionService, exchangeService);
-
         // Llamada al método a probar
-        double resultado = alquilerService.calcularMontoTotal(alquiler, distanciaEnKm);
+        double resultado = alquiler.calcularMontoTotal(tarifa, distanciaEnKm);
 
         // Verificación de resultados esperados
         assertEquals(4475, resultado, 0.001);
@@ -98,9 +85,9 @@ public class TrabajoPracticoIntegradorApplicationTests {
         LocalDateTime fechaHoraRetiro = LocalDateTime.of(2023, 10, 20, 13, 12);
         LocalDateTime fechaHoraDevolucion = fechaHoraRetiro.plusMinutes(155);
 
-        Alquiler alquiler = mock(Alquiler.class);
-        when(alquiler.getFechaHoraRetiro()).thenReturn(fechaHoraRetiro);
-        when(alquiler.getFechaHoraDevolucion()).thenReturn(fechaHoraDevolucion);
+        Alquiler alquiler = new Alquiler();
+        alquiler.setFechaHoraRetiro(fechaHoraRetiro);
+        alquiler.setFechaHoraDevolucion(fechaHoraDevolucion);
 
         double distanciaEnKm = 50.0; // Distancia en kilómetros para la prueba
 
@@ -119,14 +106,8 @@ public class TrabajoPracticoIntegradorApplicationTests {
         tarifa.setMontoKm(90);
         tarifa.setMontoHora(270);
 
-        when(tarifaRepository.findByParams(anyInt(), anyInt(), anyInt())).thenReturn(Optional.of(tarifa));
-//        when(tarifaRepository.findByDay(anyInt())).thenReturn(Optional.of(tarifa));
-
-        // Configuración del servicio de alquiler
-        alquilerService = new AlquilerServiceImpl(alquilerRepository, restTemplate, tarifaRepository, estacionService, exchangeService);
-
         // Llamada al método a probar
-        double resultado = alquilerService.calcularMontoTotal(alquiler, distanciaEnKm);
+        double resultado = alquiler.calcularMontoTotal(tarifa, distanciaEnKm);
 
         // Verificación de resultados esperados
         assertEquals(5630, resultado, 0.001);
@@ -232,7 +213,7 @@ public class TrabajoPracticoIntegradorApplicationTests {
 
         when(tarifaRepository.findAll()).thenReturn(tarifaList);
 
-        List<Tarifa> resultado = alquilerServiceImpl.obtenerTarifas();
+        List<Tarifa> resultado = tarifaService.obtenerTarifas();
 
         assertEquals(tarifaList.size(), resultado.size());
 

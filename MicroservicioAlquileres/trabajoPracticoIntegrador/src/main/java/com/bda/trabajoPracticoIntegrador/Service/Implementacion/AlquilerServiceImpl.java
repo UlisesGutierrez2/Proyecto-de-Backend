@@ -28,15 +28,15 @@ import java.util.Optional;
 public class AlquilerServiceImpl implements AlquilerService {
 
     private AlquilerRepository repository;
-    private TarifaRepository tarifasRepository;
+    private TarifaServiceImpl tarifaService;
     private RestTemplate restTemplate;
     private EstacionService estacionService;
     private ExchangeService exchangeService;
 
-    public AlquilerServiceImpl(AlquilerRepository repository, RestTemplate restTemplate, TarifaRepository tarifasRepository, EstacionService estacionService, ExchangeService exchangeService) {
+    public AlquilerServiceImpl(AlquilerRepository repository, RestTemplate restTemplate, TarifaServiceImpl tarifaService, EstacionService estacionService, ExchangeService exchangeService) {
         this.repository = repository;
         this.restTemplate = restTemplate;
-        this.tarifasRepository = tarifasRepository;
+        this.tarifaService = tarifaService;
         this.estacionService = estacionService;
         this.exchangeService = exchangeService;
     }
@@ -92,111 +92,7 @@ public class AlquilerServiceImpl implements AlquilerService {
     }
 
     public List<Tarifa> obtenerTarifas() {
-        return tarifasRepository.findAll();
-    }
-
-    public double calcularMontoTotal(Alquiler alquiler, double distanciaEnKm) {
-
-        double costoMinutosFraccionados = 0;
-
-    // Obtener el día de la semana de la fecha de retiro
-        int diaSemana = alquiler.getFechaHoraRetiro().getDayOfWeek().getValue();
-        int diaMes = alquiler.getFechaHoraRetiro().getDayOfMonth();
-        int mes = alquiler.getFechaHoraRetiro().getMonth().getValue();
-        int anio = alquiler.getFechaHoraRetiro().getYear();
-
-        Optional<Tarifa> tarifaOpt = tarifasRepository.findByParams(diaMes, mes, anio);
-
-        double montoFijoAlquiler;
-
-
-        if (tarifaOpt.isPresent()) {
-
-            Tarifa tarifa = tarifaOpt.get();
-
-            double costoPorKm = tarifa.getMontoKm(); // Obtén el precio adicional por kilómetro desde la tarifa
-
-            // Calcular el costo adicional por la distancia recorrida
-            double costoAdicionalDistancia = distanciaEnKm * costoPorKm;
-
-
-            montoFijoAlquiler = tarifa.getMontoFijoAlquiler();
-
-            // Calcular la duración del alquiler en minutos
-            long duracionEnMinutos = calcularDuracionEnMinutos(alquiler.getFechaHoraRetiro(), alquiler.getFechaHoraDevolucion());
-
-            int cantHoras = (int) (duracionEnMinutos / 60);
-            
-            int excedenteMinutos = (int) (duracionEnMinutos % 60);
-            
-            if (excedenteMinutos <= 30) {
-
-                costoMinutosFraccionados = Math.min(duracionEnMinutos, 30) * tarifa.getMontoMinutoFraccion();
-
-            } else {
-                cantHoras += 1;
-            }
-
-            // Calcular el costo por hora completa a partir del minuto 31
-            double costoHorasCompletas = Math.ceil(cantHoras * tarifa.getMontoHora());
-
-            // Calcular el costo total sumando todas las partes
-            double costoTotal = montoFijoAlquiler + costoMinutosFraccionados + costoHorasCompletas + costoAdicionalDistancia;
-
-
-            return costoTotal;
-
-        } else {
-            // No hay tarifa específica para el día, mes y año
-            // Se puede aplicar la lógica basada en el día de la semana
-            Optional<Tarifa> tarifaDiaOpt = tarifasRepository.findByDay(diaSemana);
-
-            if (tarifaDiaOpt.isPresent()) {
-
-                // Existe una tarifa para el día de la semana
-                Tarifa tarifaDia = tarifaDiaOpt.get();
-
-                double costoPorKm = tarifaDia.getMontoKm(); // Obtén el precio adicional por kilómetro desde la tarifa
-
-                // Calcular el costo adicional por la distancia recorrida
-                double costoAdicionalDistancia = distanciaEnKm * costoPorKm;
-
-
-                montoFijoAlquiler = tarifaDia.getMontoFijoAlquiler();
-
-                // Calcular la duración del alquiler en minutos
-                long duracionEnMinutos = calcularDuracionEnMinutos(alquiler.getFechaHoraRetiro(), alquiler.getFechaHoraDevolucion());
-
-                int cantHoras = (int) (duracionEnMinutos / 60);
-                int excedenteMinutos = (int) (duracionEnMinutos % 60);
-
-                if (excedenteMinutos <= 30) {
-                    costoMinutosFraccionados = Math.min(duracionEnMinutos, 30) * tarifaDia.getMontoMinutoFraccion();
-                } else {
-                    cantHoras += 1;
-                }
-
-                // Calcular el costo por hora completa a partir del minuto 31
-                double costoHorasCompletas = Math.ceil(cantHoras * tarifaDia.getMontoHora());
-
-                // Calcular el costo total sumando todas las partes
-                double costoTotal = montoFijoAlquiler + costoMinutosFraccionados + costoHorasCompletas + costoAdicionalDistancia;
-
-                return costoTotal;
-            } else {
-                // Manejar el caso en que no haya tarifa para el día de la semana
-                throw new NoSuchElementException("No hay tarifa definida para el día de la semana: " + diaSemana);
-            }
-        }
-    }
-
-
-    private long calcularDuracionEnMinutos(LocalDateTime fechaHoraRetiro, LocalDateTime fechaHoraDevolucion) {
-
-        Duration duration = Duration.between(fechaHoraRetiro, fechaHoraDevolucion);
-        log.info("Duracion: " + duration);
-        // Devuelve la diferencia en minutos
-        return duration.toMinutes();
+        return tarifaService.obtenerTarifas();
     }
 
     public Alquiler finalizarAlquiler(int id, String moneda, int estacionDevolucionId) {
@@ -214,8 +110,19 @@ public class AlquilerServiceImpl implements AlquilerService {
             double distanciaEnKm = estacionService.calcularDistancia(estacionRetiro.getLatitud(), estacionRetiro.getLongitud(), estacionDevolucion.getLatitud(), estacionDevolucion.getLongitud());
             log.info("Distancia entre las estaciones: {} km", distanciaEnKm);
 
+            // Obtener el día de la semana de la fecha de retiro
+            int diaSemana = alquiler.getFechaHoraRetiro().getDayOfWeek().getValue();
+            int diaMes = alquiler.getFechaHoraRetiro().getDayOfMonth();
+            int mes = alquiler.getFechaHoraRetiro().getMonth().getValue();
+            int anio = alquiler.getFechaHoraRetiro().getYear();
+
+            Tarifa tarifa = tarifaService.findByParams(diaMes, mes, anio);
+            if (tarifa == null) {
+                tarifa = tarifaService.findByDay(diaSemana);
+            }
+
             // Calcular el monto total del alquiler
-            double montoTotal = calcularMontoTotal(alquiler, distanciaEnKm);
+            double montoTotal = alquiler.calcularMontoTotal(tarifa, distanciaEnKm);
             log.info("Monto total del alquiler: {}", montoTotal);
 
             String cotizacionApiUrl = "http://34.82.105.125:8080/convertir";
@@ -223,10 +130,14 @@ public class AlquilerServiceImpl implements AlquilerService {
             // Obtener la cotización
             double montoConvertido = exchangeService.obtenerCotizacion(cotizacionApiUrl, moneda, montoTotal);
 
-            alquiler.finalizar(montoConvertido, estacionDevolucionId);
+            alquiler.finalizar(montoTotal, estacionDevolucionId);
+
+            update(alquiler.getId(), alquiler);
+
+            alquiler.setMonto(montoConvertido);
 
             // Guardar la instancia actualizada en la base de datos
-            return update(alquiler.getId(), alquiler);
+            return alquiler;
 
         } else {
             log.error("Alquiler no encontrado o ya devuelto");

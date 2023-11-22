@@ -2,6 +2,7 @@ package com.bda.trabajoPracticoIntegrador.Service.Interface;
 
 import com.bda.trabajoPracticoIntegrador.Dtos.AlquilerDto;
 import com.bda.trabajoPracticoIntegrador.Entity.Alquiler;
+import com.bda.trabajoPracticoIntegrador.Entity.Tarifa;
 
 import java.util.List;
 
@@ -19,5 +20,7 @@ public interface AlquilerService {
  Alquiler iniciarAlquiler(String idCliente, int estacionRetiroId);
 
  Alquiler finalizarAlquiler(int id, String moneda, int estacionDevolucionId);
+
+ List<Tarifa> obtenerTarifas();
  
 }

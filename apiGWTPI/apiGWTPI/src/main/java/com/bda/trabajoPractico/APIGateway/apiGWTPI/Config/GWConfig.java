@@ -38,10 +38,11 @@ public class GWConfig {
                         .pathMatchers("/api/entradas/**").hasAnyRole("ADMIN", "CLIENTE")
 
                          */
-                        .pathMatchers(HttpMethod.POST, "/api/estaciones/**").hasRole("ADMIN")
-                        .pathMatchers(HttpMethod.GET, "/api/alquileres/**").hasRole("ADMIN")
-                        .pathMatchers("/api/**").hasRole("CLIENTE")
+                        .pathMatchers(HttpMethod.POST, "/api/estaciones/**").hasRole("ADMINISTRADOR")
+                        .pathMatchers(HttpMethod.GET, "/api/alquileres/**").hasRole("ADMINISTRADOR")
                         .pathMatchers(HttpMethod.GET,"/api/estaciones/**").hasRole("CLIENTE")
+                        .pathMatchers(HttpMethod.PATCH, "/api/alquileres/**").hasRole("CLIENTE")
+                        .pathMatchers(HttpMethod.POST, "/api/alquileres/**").hasRole("CLIENTE")
                         .anyExchange().authenticated()
                 )
                 .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()))
