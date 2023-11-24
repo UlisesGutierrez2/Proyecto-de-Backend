@@ -54,11 +54,11 @@ public class Alquiler {
         fechaHoraRetiro = LocalDateTime.now();
     }
 
-    public void finalizar(double montoFinal, int estacionDevolucion) {
+    public void finalizar(double montoFinal, int estacionDevolucion, Tarifa tarifa) {
         this.monto = montoFinal;
         estado = 2;
         this.estacionDevolucion = estacionDevolucion;
-
+        idTarifa = tarifa;
     }
 
     public double calcularMontoTotal(Tarifa tarifa, double distanciaEnKm) {

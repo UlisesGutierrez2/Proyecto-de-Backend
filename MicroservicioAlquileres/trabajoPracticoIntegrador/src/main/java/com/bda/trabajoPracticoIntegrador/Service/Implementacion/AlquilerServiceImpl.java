@@ -29,13 +29,11 @@ public class AlquilerServiceImpl implements AlquilerService {
 
     private AlquilerRepository repository;
     private TarifaServiceImpl tarifaService;
-    private RestTemplate restTemplate;
     private EstacionService estacionService;
     private ExchangeService exchangeService;
 
-    public AlquilerServiceImpl(AlquilerRepository repository, RestTemplate restTemplate, TarifaServiceImpl tarifaService, EstacionService estacionService, ExchangeService exchangeService) {
+    public AlquilerServiceImpl(AlquilerRepository repository, TarifaServiceImpl tarifaService, EstacionService estacionService, ExchangeService exchangeService) {
         this.repository = repository;
-        this.restTemplate = restTemplate;
         this.tarifaService = tarifaService;
         this.estacionService = estacionService;
         this.exchangeService = exchangeService;
@@ -130,7 +128,7 @@ public class AlquilerServiceImpl implements AlquilerService {
             // Obtener la cotización
             double montoConvertido = exchangeService.obtenerCotizacion(cotizacionApiUrl, moneda, montoTotal);
 
-            alquiler.finalizar(montoTotal, estacionDevolucionId);
+            alquiler.finalizar(montoTotal, estacionDevolucionId,tarifa);
 
             update(alquiler.getId(), alquiler);
 
